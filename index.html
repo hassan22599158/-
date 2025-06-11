@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة الشطرنج الاحترافية - المدرب الخبير (نسخة مستقرة)</title>
+    
+    <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <script src="js/chessboard-1.0.0.min.js"></script>
+    <script src="js/chess.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS styles remain the same as they are stable and well-designed */
+        :root {
+            --primary-color: #0d6efd; --success-color: #198754; --warning-color: #ffc107;
+            --danger-color: #dc3545; --info-color: #0dcaf0; --orange-color: #fd7e14;
+            --light-bg: #f8f9fa; --dark-text: #212529; --muted-text: #6c757d;
+            --card-bg: #ffffff; --modal-bg: #ffffff; --border-radius-lg: 16px;
+            --border-radius-md: 8px; --shadow-strong: 0 8px 24px rgba(0, 0, 0, 0.15);
+            --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08); --font-family-main: 'Cairo', sans-serif;
+        }
+        body {
+            font-family: var(--font-family-main); direction: rtl; text-align: right;
+            background-color: var(--light-bg); color: var(--dark-text); margin: 0;
+            padding: 2rem; line-height: 1.7;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 2rem; border-bottom: 1px solid #dee2e6; padding-bottom: 1.5rem; }
+        header h1 { font-weight: 900; font-size: 3rem; color: var(--primary-color); }
+        header p { font-size: 1.25rem; color: var(--muted-text); }
+        .main-layout { display: grid; grid-template-columns: 1fr 450px; gap: 2rem; align-items: flex-start; }
+        @media (max-width: 1200px) { .main-layout { grid-template-columns: 1fr; } }
+        .card { background-color: var(--card-bg); border-radius: var(--border-radius-lg); box-shadow: var(--shadow-light); padding: 1.5rem 2rem; margin-bottom: 1.5rem; }
+        .card-header { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #eee; }
+        #mainBoard { width: 100%; max-width: 700px; margin: 0 auto; box-shadow: var(--shadow-strong); border-radius: var(--border-radius-md); }
+        .highlight-selected { box-shadow: inset 0 0 3px 3px var(--orange-color) !important; }
+        .highlight-legal { background: radial-gradient(circle, rgba(20, 85, 30, 0.5) 25%, transparent 30%); }
+        .game-status { text-align: center; font-size: 1.2rem; font-weight: 700; padding: 1rem; border-radius: var(--border-radius-md); background-color: #e9ecef; }
+        .controls-panel .btn { display: block; width: 100%; padding: 0.75rem 1rem; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; cursor: pointer; border: none; border-radius: var(--border-radius-md); transition: all 0.2s ease; }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: #0b5ed7; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-danger:hover { background-color: #b02a37; }
+        .pgn-container { font-family: monospace, sans-serif; text-align: left; direction: ltr; background-color: #e9ecef; padding: 1rem; border-radius: var(--border-radius-md); height: 200px; overflow-y: scroll; line-height: 1.5; border: 1px solid #ccc; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s 0.3s; }
+        .modal-overlay.visible { opacity: 1; visibility: visible; transition: opacity 0.3s ease; }
+        .modal-content { background-color: var(--modal-bg); padding: 2.5rem; border-radius: var(--border-radius-lg); width: 90%; max-width: 650px; box-shadow: var(--shadow-strong); transform: scale(0.9); transition: transform 0.3s ease; }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+        .modal-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid; }
+        .modal-header .icon { font-size: 2.5rem; }
+        .modal-header .title { font-size: 1.8rem; font-weight: 700; }
+        .modal-header.excellent { border-color: var(--success-color); color: var(--success-color); }
+        .modal-header.good { border-color: var(--info-color); color: var(--info-color); }
+        .modal-header.inaccuracy { border-color: var(--warning-color); color: var(--warning-color); }
+        .modal-header.mistake { border-color: var(--orange-color); color: var(--orange-color); }
+        .modal-header.blunder { border-color: var(--danger-color); color: var(--danger-color); }
+        .modal-body h3 { font-size: 1.2rem; font-weight: 700; color: var(--dark-text); margin-top: 1.5rem; margin-bottom: 0.5rem; }
+        .modal-body .explanation { background-color: #f8f9fa; padding: 1rem; border-radius: var(--border-radius-md); border-right: 5px solid; }
+        .modal-footer { text-align: center; margin-top: 2rem; }
+        .modal-footer .btn-close { background-color: var(--muted-text); color: white; padding: 0.75rem 2.5rem; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>المدرب الخبير</h1>
+            <p>حلل كل نقلة، تعلم المبادئ، واحترف الشطرنج</p>
+        </header>
+
+        <main class="main-layout">
+            <div class="game-area-container">
+                <div class="card">
+                    <div id="mainBoard"></div>
+                </div>
+                <div id="gameStatus" class="game-status">دور الأبيض للعب</div>
+            </div>
+
+            <aside class="info-panel">
+                <div class="card">
+                    <h2 class="card-header">لوحة التحكم</h2>
+                    <div class="controls-panel">
+                        <button id="startBtn" class="btn btn-primary">ابدأ لعبة جديدة</button>
+                        <button id="undoBtn" class="btn btn-danger">تراجع عن النقلة</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2 class="card-header">سجل النقلات (PGN)</h2>
+                    <div id="pgn" class="pgn-container"></div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <div id="feedbackModal" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modalHeader" class="modal-header"><span id="modalIcon" class="icon"></span><span id="modalTitle" class="title"></span></div>
+            <div id="modalBody" class="modal-body">
+                <div><h3>شرح النقلة:</h3><div id="moveExplanation" class="explanation"></div></div>
+                <div><h3>القاعدة المطبقة / المهملة:</h3><div id="principleExplanation" class="explanation"></div></div>
+                <div><h3>النقلة الأفضل المقترحة:</h3><div id="suggestionExplanation" class="explanation"></div></div>
+            </div>
+            <div class="modal-footer"><button id="closeModalBtn" class="btn btn-close">فهمت، أكمل اللعب</button></div>
+        </div>
+    </div>
+
+    <script>
+    // ==========================================================================
+    //  Knowledge Base and Helper functions - No changes needed here
+    // ==========================================================================
+    const chessPrinciples = {'OPENING_CENTER_CONTROL':{id:'OPENING_CENTER_CONTROL',name:'السيطرة على المركز',priority:10,description:'السيطرة على المربعات المركزية (e4, d4, e5, d5) هي أهم هدف في الافتتاح.',check:(m,g)=>(m.piece==='p'&&(m.to.includes('4')||m.to.includes('5')))&&(m.to.includes('e')||m.to.includes('d'))},'OPENING_DEVELOP_KNIGHTS':{id:'OPENING_DEVELOP_KNIGHTS',name:'تطوير الأحصنة',priority:9,description:'طور أحصنتك نحو المركز قبل الفيلة.',check:(m,g)=>m.piece==='n'&&(m.to==='f3'||m.to==='c3'||m.to==='f6'||m.to==='c6')},'OPENING_DEVELOP_BISHOPS':{id:'OPENING_DEVELOP_BISHOPS',name:'تطوير الفيلة',priority:8,description:'بعد الأحصنة، طور فيلتك إلى مربعات نشطة.',check:(m,g)=>m.piece==='b'},'OPENING_CASTLE_EARLY':{id:'OPENING_CASTLE_EARLY',name:'التبييت المبكر',priority:10,description:'قم بالتبييت في أقرب فرصة ممكنة لحماية ملكك.',check:(m,g)=>m.flags.includes('k')||m.flags.includes('q')},'MISTAKE_QUEEN_TOO_EARLY':{id:'MISTAKE_QUEEN_TOO_EARLY',name:'إخراج الوزير مبكراً',priority:20,description:'تجنب إخراج وزيرك مبكراً، فقد يصبح هدفاً للخصم.',check:(m,g)=>m.piece==='q'&&g.history().length<8},'MISTAKE_WEAKEN_KING_PAWN_F':{id:'MISTAKE_WEAKEN_KING_PAWN_F',name:'إضعاف بيدق الملك (F)',priority:30,description:'تحريك البيدق f يكشف ملكك بشكل خطير.',check:(m,g)=>m.piece==='p'&&m.from.includes('f')},'BLUNDER_HANGING_PIECE':{id:'BLUNDER_HANGING_PIECE',name:'خطأ فادح - قطعة متروكة',priority:100,description:'لقد تركت إحدى قطعك بدون حماية!',check:(m,g)=>isPieceHanging(m.to,g)},'ENDGAME_ACTIVATE_KING':{id:'ENDGAME_ACTIVATE_KING',name:'تفعيل الملك',priority:40,description:'في نهاية اللعبة، الملك قطعة هجومية قوية.',check:(m,g)=>m.piece==='k'&&isEndgame(g)},'ENDGAME_ROOK_ON_7TH':{id:'ENDGAME_ROOK_ON_7TH',name:'قلعة في الصف السابع',priority:45,description:'وضع قلعتك في الصف السابع للخصم حركة قوية جداً.',check:(m,g)=>m.piece==='r'&&((m.color==='w'&&m.to.includes('7'))||(m.color==='b'&&m.to.includes('2')))}};
+    function isEndgame(g){return g.SQUARES.map(s=>g.get(s)).filter(Boolean).length<12}
+    function isPieceHanging(sq,g){const p=g.get(sq);if(!p)return!1;return g.isAttacked(sq,p.color==='w'?'b':'w')}
+
+    // ==========================================================================
+    // 8. Core Game Logic - REBUILT FROM SCRATCH FOR STABILITY
+    // -- منطق اللعبة الأساسي - تمت إعادة بناءه من الصفر للاستقرار --
+    // ==========================================================================
+    $(document).ready(function() {
+        // --- Global State Variables ---
+        let board = null;         // The visual chessboard object
+        let game = new Chess();   // The internal game logic engine
+        let selectedSquare = null; // Keeps track of the currently selected square
+        let playerColor = 'w';    // The player will always be White
+        let thinking = false;     // Is the computer currently thinking?
+
+        // --- Main Function to Handle Clicks ---
+        // This function has been completely rebuilt.
+        // --- تمت إعادة بناء هذه الدالة بالكامل ---
+        function handleSquareClick(square, piece) {
+            // 1. IGNORE CLICKS IF IT'S NOT THE PLAYER'S TURN
+            // تجاهل النقرات إذا كان الكمبيوتر يفكر أو انتهت اللعبة
+            if (thinking || game.game_over() || game.turn() !== playerColor) {
+                return;
+            }
+
+            // 2. HANDLE THE SECOND CLICK (MOVE THE PIECE)
+            // التعامل مع النقرة الثانية (تحريك القطعة)
+            if (selectedSquare) {
+                const from = selectedSquare;
+                const to = square;
+
+                // Attempt to make the move
+                const move = game.move({ from, to, promotion: 'q' });
+
+                // Deselect everything visually after the second click
+                removeHighlights();
+                selectedSquare = null;
+
+                // If the move was illegal, stop here.
+                if (move === null) {
+                    return;
+                }
+
+                // If the move was LEGAL, proceed with the game flow
+                playerMoveMade(move);
+                return;
+            }
+
+            // 3. HANDLE THE FIRST CLICK (SELECT A PIECE)
+            // التعامل مع النقرة الأولى (تحديد قطعة)
+            const pieceOnSquare = game.get(square);
+            if (pieceOnSquare && pieceOnSquare.color === playerColor) {
+                selectedSquare = square;
+                highlightMoves(square);
+            }
+        }
+
+        // --- Function to execute the sequence after a player's move is confirmed ---
+        function playerMoveMade(move) {
+            // Step 1: Update visual board immediately
+            board.position(game.fen());
+            
+            // Step 2: Update logs and status
+            updatePGN();
+            updateStatus();
+            
+            // Step 3: Analyze the move and show feedback
+            analyzeAndShowFeedback(move, game.history({ verbose: true }));
+            
+            // Step 4: Schedule the computer's response
+            setTimeout(triggerComputerMove, 500);
+        }
+        
+        // --- Function to trigger the computer's thinking process ---
+        function triggerComputerMove() {
+            if (game.game_over()) return;
+            
+            thinking = true;
+            updateStatus(); // Show "Thinking..." message
+            
+            // Use a timeout to simulate thinking and prevent the UI from freezing
+            setTimeout(function() {
+                const move = getComputerMove();
+                game.move(move);
+                board.position(game.fen());
+                thinking = false;
+                updateStatus();
+                updatePGN();
+            }, 250);
+        }
+        
+        // --- Computer's move selection logic ---
+        function getComputerMove() {
+            const possibleMoves = game.moves({ verbose: true });
+            if (possibleMoves.length === 0) return null;
+
+            let bestMove = possibleMoves[0];
+            let bestValue = -Infinity;
+
+            possibleMoves.forEach(move => {
+                game.move(move.san);
+                const value = -evaluateBoard(game);
+                game.undo();
+                if (value > bestValue) {
+                    bestValue = value;
+                    bestMove = move;
+                }
+            });
+            return bestMove;
+        }
+
+        // --- UI and Helper Functions ---
+        function highlightMoves(square) {
+            $(`#mainBoard .square-${square}`).addClass('highlight-selected');
+            const moves = game.moves({ square: square, verbose: true });
+            moves.forEach(move => $(`#mainBoard .square-${move.to}`).addClass('highlight-legal'));
+        }
+        function removeHighlights() {
+            $('.square-55d63').removeClass('highlight-selected highlight-legal');
+        }
+        function updateStatus() {
+            let status;
+            const moveColor = game.turn() === 'w' ? 'الأبيض' : 'الأسود';
+            if (game.in_checkmate()) status = `انتهت اللعبة، كش ملك للفريق ${moveColor}.`;
+            else if (game.in_draw()) status = 'انتهت اللعبة، تعادل.';
+            else {
+                status = `دور الفريق ${moveColor} للعب`;
+                if (thinking) status = 'المدرب الخبير يحلل...';
+            }
+            $('#gameStatus').html(status);
+        }
+        function updatePGN() {
+            $('#pgn').html(game.pgn());
+            $('.pgn-container').scrollTop($('.pgn-container')[0].scrollHeight);
+        }
+        function evaluateBoard(game) {
+            let total = 0;
+            game.SQUARES.forEach(s => {
+                const p = game.get(s);
+                if (p) total += getPieceValue(p.type) * (p.color === 'w' ? 1 : -1);
+            });
+            return total;
+        }
+        function getPieceValue(p) { return {p:10,n:30,b:30,r:50,q:90,k:900}[p] || 0; }
+        function closeModal() { $('#feedbackModal').removeClass('visible'); }
+        function analyzeAndShowFeedback(m, h) {
+            const turn = h.length, tg = new Chess(game.fen());
+            tg.undo();
+            let principles = [], feedback;
+            for(const k in chessPrinciples){const p=chessPrinciples[k];if(p.check(m,tg,h)){principles.push({...p,triggered:!0})}}
+            principles.sort((a,b)=>b.priority-a.priority);
+            if(principles.length>0){const top=principles[0];if(top.id.startsWith('BLUNDER'))feedback={type:'blunder',title:'خطأ فادح!',icon:'🔥',moveExplanation:`النقلة ${m.san} خطيرة جدا!`,principle:top,suggestion:'دائما تحقق من سلامة قطعك.'};else if(top.id.startsWith('MISTAKE'))feedback={type:'mistake',title:'خطأ استراتيجي',icon:'🤔',moveExplanation:`النقلة ${m.san} تخالف مبدأً هاماً.`,principle:top,suggestion:'فكر في العواقب طويلة المدى.'};else feedback={type:'excellent',title:'نقلة ممتازة!',icon:'⭐',moveExplanation:`أحسنت! النقلة ${m.san} تتبع أفضل الممارسات.`,principle:top,suggestion:'هكذا يلعب المحترفون!'}}
+            if(!feedback)feedback={type:'good',title:'نقلة قياسية',icon:'😊',moveExplanation:`النقلة ${m.san} منطقية ومقبولة.`,principle:{name:'لعب آمن',description:'لم ترتكب أخطاء واضحة.'},suggestion:'استمر في البحث عن خطة.'};
+            showModal(feedback);
+        }
+        function showModal(f){const{type:t,title:i,icon:o,moveExplanation:n,principle:p,suggestion:s}=f;$('#modalHeader').removeClass().addClass('modal-header '+t);$('#modalIcon').text(o);$('#modalTitle').text(i);$('#moveExplanation').text(n).css('border-color',getBorderColor(t));if(p){$('#principleExplanation').html(`<strong>${p.name} (الأهمية: ${p.priority||'عالية'})</strong><p>${p.description}</p>`).css('border-color',getBorderColor(t))}else{$('#principleExplanation').text('لا توجد قاعدة مباشرة.').css('border-color','#ccc')}$('#suggestionExplanation').text(s).css('border-color',getBorderColor(t));$('#feedbackModal').addClass('visible')}
+        function getBorderColor(t){return{excellent:'var(--success-color)',good:'var(--info-color)',inaccuracy:'var(--warning-color)',mistake:'var(--orange-color)',blunder:'var(--danger-color)'}[t]||'#ccc'}
+        
+        // --- Initialization ---
+        function init() {
+            const config = {
+                position: 'start',
+                pieceTheme: 'img/{piece}.png',
+                onSquareClick: handleSquareClick // Use the new, rebuilt handler
+            };
+            board = Chessboard('mainBoard', config);
+            updateStatus();
+            $(window).resize(board.resize);
+            
+            $('#startBtn').on('click', function() {
+                game.reset();
+                board.start();
+                updateStatus();
+                $('#pgn').html('');
+                selectedSquare = null;
+                removeHighlights();
+            });
+            $('#undoBtn').on('click', function() {
+                if(thinking) return;
+                game.undo(); game.undo();
+                board.position(game.fen());
+                updateStatus(); updatePGN();
+                selectedSquare = null; removeHighlights();
+            });
+            $('#closeModalBtn').on('click', closeModal);
+        }
+
+        init(); // Start the application
+    });
+    </script>
+</body>
+</html>
