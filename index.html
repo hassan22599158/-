@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة الشطرنج الاحترافية - المدرب الخبير</title>
+    
+    <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <script src="js/chessboard-1.0.0.min.js"></script>
+    <script src="js/chess.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ==========================================================================
+           1. Core Design System & Variables
+           ========================================================================== */
+        :root {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #0dcaf0;
+            --orange-color: #fd7e14;
+            
+            --light-bg: #f8f9fa;
+            --dark-text: #212529;
+            --muted-text: #6c757d;
+            
+            --card-bg: #ffffff;
+            --modal-bg: #ffffff;
+            
+            --border-radius-lg: 16px;
+            --border-radius-md: 8px;
+            
+            --shadow-strong: 0 8px 24px rgba(0, 0, 0, 0.15);
+            --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+            --font-family-main: 'Cairo', sans-serif;
+        }
+
+        /* ==========================================================================
+           2. General Body & Layout Styles
+           ========================================================================== */
+        body {
+            font-family: var(--font-family-main);
+            direction: rtl;
+            text-align: right;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 1.5rem;
+        }
+
+        header h1 {
+            font-weight: 900;
+            font-size: 3rem;
+            color: var(--primary-color);
+        }
+
+        header p {
+            font-size: 1.25rem;
+            color: var(--muted-text);
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ==========================================================================
+           3. Card Component
+           ========================================================================== */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-light);
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* ==========================================================================
+           4. Game Area & Chessboard
+           ========================================================================== */
+        #mainBoard {
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+            box-shadow: var(--shadow-strong);
+            border-radius: var(--border-radius-md);
+        }
+
+        .highlight-selected {
+            box-shadow: inset 0 0 3px 3px var(--orange-color);
+        }
+        .highlight-legal {
+            background: radial-gradient(circle, rgba(20, 85, 30, 0.5) 25%, transparent 30%);
+        }
+
+        .game-status {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 1rem;
+            border-radius: var(--border-radius-md);
+            background-color: #e9ecef;
+        }
+        
+        /* ==========================================================================
+           5. Controls & Information Panel
+           ========================================================================== */
+        .controls-panel .btn {
+            display: block;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            border: none;
+            border-radius: var(--border-radius-md);
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: #0b5ed7; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-danger:hover { background-color: #b02a37; }
+
+        .pgn-container {
+            font-family: monospace, sans-serif;
+            text-align: left;
+            direction: ltr;
+            background-color: #e9ecef;
+            padding: 1rem;
+            border-radius: var(--border-radius-md);
+            height: 200px;
+            overflow-y: scroll;
+            line-height: 1.5;
+            border: 1px solid #ccc;
+        }
+
+        /* ==========================================================================
+           6. Feedback Modal
+           ========================================================================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s 0.3s;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal-content {
+            background-color: var(--modal-bg);
+            padding: 2.5rem;
+            border-radius: var(--border-radius-lg);
+            width: 90%;
+            max-width: 650px; /* Increased width */
+            box-shadow: var(--shadow-strong);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid;
+        }
+        
+        .modal-header .icon { font-size: 2.5rem; }
+        .modal-header .title { font-size: 1.8rem; font-weight: 700; }
+
+        .modal-header.excellent { border-color: var(--success-color); color: var(--success-color); }
+        .modal-header.good { border-color: var(--info-color); color: var(--info-color); }
+        .modal-header.inaccuracy { border-color: var(--warning-color); color: var(--warning-color); }
+        .modal-header.mistake { border-color: var(--orange-color); color: var(--orange-color); }
+        .modal-header.blunder { border-color: var(--danger-color); color: var(--danger-color); }
+
+        .modal-body h3 { font-size: 1.2rem; font-weight: 700; color: var(--dark-text); margin-top: 1.5rem; margin-bottom: 0.5rem; }
+        .modal-body .explanation { background-color: #f8f9fa; padding: 1rem; border-radius: var(--border-radius-md); border-right: 5px solid; }
+        .modal-footer { text-align: center; margin-top: 2rem; }
+        .modal-footer .btn-close { background-color: var(--muted-text); color: white; padding: 0.75rem 2.5rem; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>المدرب الخبير</h1>
+            <p>حلل كل نقلة، تعلم المبادئ، واحترف الشطرنج</p>
+        </header>
+
+        <main class="main-layout">
+            <div class="game-area-container">
+                <div class="card">
+                    <div id="mainBoard"></div>
+                </div>
+                <div id="gameStatus" class="game-status">دور الأبيض للعب</div>
+            </div>
+
+            <aside class="info-panel">
+                <div class="card">
+                    <h2 class="card-header">لوحة التحكم</h2>
+                    <div class="controls-panel">
+                        <button id="startBtn" class="btn btn-primary">ابدأ لعبة جديدة</button>
+                        <button id="undoBtn" class="btn btn-danger">تراجع عن النقلة</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2 class="card-header">سجل النقلات (PGN)</h2>
+                    <div id="pgn" class="pgn-container"></div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <div id="feedbackModal" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modalHeader" class="modal-header">
+                <span id="modalIcon" class="icon"></span>
+                <span id="modalTitle" class="title"></span>
+            </div>
+            <div id="modalBody" class="modal-body">
+                <div><h3>شرح النقلة:</h3><div id="moveExplanation" class="explanation"></div></div>
+                <div><h3>القاعدة المطبقة / المهملة:</h3><div id="principleExplanation" class="explanation"></div></div>
+                <div><h3>النقلة الأفضل المقترحة:</h3><div id="suggestionExplanation" class="explanation"></div></div>
+            </div>
+            <div class="modal-footer"><button id="closeModalBtn" class="btn btn-close">فهمت، أكمل اللعب</button></div>
+        </div>
+    </div>
+
+    <script>
+    // ==========================================================================
+    // 7. EXPANDED Chess Knowledge Base (قاعدة البيانات المعرفية الموسعة)
+    // ==========================================================================
+    const chessPrinciples = {
+        // --- OPENING PRINCIPLES (مبادئ الافتتاح) ---
+        'OPENING_CENTER_CONTROL':{id:'OPENING_CENTER_CONTROL',name:'السيطرة على المركز',priority:10,description:'السيطرة على المربعات المركزية (e4, d4, e5, d5) هي أهم هدف في الافتتاح. القطع في المركز تسيطر على أكبر مساحة وتكون أكثر فاعلية.', check: (move, game) => (move.piece === 'p' && (move.to.includes('4') || move.to.includes('5'))) && (move.to.includes('e') || move.to.includes('d')) },
+        'OPENING_DEVELOP_KNIGHTS':{id:'OPENING_DEVELOP_KNIGHTS',name:'تطوير الأحصنة',priority:9,description:'طور أحصنتك نحو المركز قبل الفيلة. أفضل المربعات هي f3/c3 للأبيض و f6/c6 للأسود.', check: (move, game) => move.piece === 'n' && (move.to === 'f3' || move.to === 'c3' || move.to === 'f6' || move.to === 'c6')},
+        'OPENING_DEVELOP_BISHOPS':{id:'OPENING_DEVELOP_BISHOPS',name:'تطوير الفيلة',priority:8,description:'بعد الأحصنة، طور فيلتك إلى مربعات نشطة حيث تسيطر على أقطار طويلة ومهمة.', check: (move, game) => move.piece === 'b'},
+        'OPENING_CASTLE_EARLY':{id:'OPENING_CASTLE_EARLY',name:'التبييت المبكر',priority:10,description:'قم بالتبييت في أقرب فرصة ممكنة (أول 7-10 نقلات). هذه النقلة تحمي ملكك وتُدخل القلعة في اللعب.', check: (move, game) => move.flags.includes('k') || move.flags.includes('q')},
+        'OPENING_CONNECT_ROOKS':{id:'OPENING_CONNECT_ROOKS',name:'ربط القلاع',priority:7,description:'بعد تطوير القطع الصغرى، حرك وزيرك للسماح للقلاع بحماية بعضها البعض والسيطرة على الصف الخلفي.', check: (move, game) => false}, // Hard to check simply
+        
+        // --- OPENING MISTAKES (أخطاء الافتتاح) ---
+        'MISTAKE_MOVE_SAME_PIECE': {id:'MISTAKE_MOVE_SAME_PIECE', name:'تحريك نفس القطعة مرتين', priority: 15, description: 'في الافتتاح، حاول ألا تحرك نفس القطعة مرتين إلا لضرورة قصوى. الهدف هو تطوير كل قطعك بسرعة.', check: (move, game, history) => { const piece = game.get(move.to); return history.some(h => h.piece === move.piece && h.color === move.color); }},
+        'MISTAKE_QUEEN_TOO_EARLY':{id:'MISTAKE_QUEEN_TOO_EARLY',name:'إخراج الوزير مبكراً',priority:20,description:'تجنب إخراج وزيرك في وقت مبكر جداً. يمكن أن يصبح هدفاً لقطع الخصم، مما يضيع عليك النقلات.', check: (move, game) => move.piece === 'q' && game.history().length < 8},
+        'MISTAKE_WEAKEN_KING_PAWN_F':{id:'MISTAKE_WEAKEN_KING_PAWN_F',name:'إضعاف بيدق الملك (F)',priority:30,description:'تحريك البيدق f (f2/f7) يكشف ملكك بشكل خطير للغاية وهو من أسوأ الأخطاء الموضعية في الافتتاح.', check: (move, game) => move.piece === 'p' && move.from.includes('f') && !game.get(move.color === 'w' ? 'e1' : 'e8').moved},
+        'MISTAKE_UNNECESSARY_PAWN_MOVE':{id:'MISTAKE_UNNECESSARY_PAWN_MOVE',name:'حركة بيدق غير ضرورية',priority:12,description:'ركز على تطوير القطع بدلاً من تحريك بيادق الأجنحة (a, b, g, h) بدون داعٍ في الافتتاح.', check: (move, game) => move.piece === 'p' && (move.from.includes('a') || move.from.includes('h'))},
+        
+        // --- MIDDLEGAME & TACTICS (وسط اللعبة والتكتيكات) ---
+        'BLUNDER_HANGING_PIECE': {id:'BLUNDER_HANGING_PIECE', name:'خطأ فادح - قطعة متروكة', priority: 100, description: 'لقد قمت بنقلة تركت إحدى قطعك بدون حماية ويمكن للخصم أخذها مجاناً. هذا هو أسوأ أنواع الأخطاء.', check: (move, game) => isPieceHanging(move.to, game)},
+        'GOOD_TACTIC_FORK': {id: 'GOOD_TACTIC_FORK', name: 'تكتيك الشوكة', priority: 50, description: 'أحسنت! لقد قمت بعمل شوكة (Fork)، وهي هجوم بقطعة واحدة على قطعتين أو أكثر من قطع الخصم في نفس الوقت.', check: (move, game) => false}, // Requires deeper analysis
+        'GOOD_IMPROVE_WORST_PIECE': {id: 'GOOD_IMPROVE_WORST_PIECE', name: 'تحسين أسوأ قطعة', priority: 25, description: 'نقلة استراتيجية جيدة. قمت بتحسين وضع قطعة كانت خاملة أو في وضع سيء.', check: (move, game) => false},
+        'MISTAKE_BAD_PAWN_STRUCTURE': {id: 'MISTAKE_BAD_PAWN_STRUCTURE', name: 'إضعاف هيكل البيادق', priority: 18, description: 'هذه النقلة أدت إلى ضعف في هيكل بيادقك (مثل إنشاء بيدق معزول أو مضاعف)، مما قد يصبح هدفًا للخصم لاحقًا.', check: (move, game) => false},
+
+        // --- ENDGAME PRINCIPLES (مبادئ نهاية اللعبة) ---
+        'ENDGAME_ACTIVATE_KING': {id: 'ENDGAME_ACTIVATE_KING', name: 'تفعيل الملك', priority: 40, description: 'في نهاية اللعبة، الملك قطعة هجومية قوية. إحضاره إلى وسط الرقعة قرار صائب.', check: (move, game) => move.piece === 'k' && isEndgame(game)},
+        'ENDGAME_ROOK_ON_7TH': {id: 'ENDGAME_ROOK_ON_7TH', name: 'قلعة في الصف السابع', priority: 45, description: 'وضع قلعتك في الصف السابع للخصم هو حركة قوية جدًا، فهي تهدد بيادقه وتقيد حركة ملكه.', check: (move, game) => move.piece === 'r' && ((move.color === 'w' && move.to.includes('7')) || (move.color === 'b' && move.to.includes('2')))},
+        'ENDGAME_PASSED_PAWN': {id: 'ENDGAME_PASSED_PAWN', name: 'إنشاء بيدق متجاوز', priority: 50, description: 'ممتاز! لقد قمت بإنشاء بيدق متجاوز (Passed Pawn)، وهو سلاح حاسم للفوز في نهايات اللعب.', check: (move, game) => false}, // Requires deeper analysis
+    };
+
+    // Helper functions for analysis
+    function isEndgame(game) {
+        // Simplified endgame check: less than 12 pieces on board
+        return game.SQUARES.map(s => game.get(s)).filter(p => p).length < 12;
+    }
+    function isPieceHanging(square, game) {
+        const piece = game.get(square);
+        if (!piece) return false;
+        // Check if any opponent piece can attack the square
+        const opponentColor = piece.color === 'w' ? 'b' : 'w';
+        return game.isAttacked(square, opponentColor);
+    }
+    
+    // ==========================================================================
+    // 8. Core Game Logic (منطق اللعبة الأساسي) - محدّث بالكامل
+    // ==========================================================================
+    $(document).ready(function() {
+        let board = null;
+        const game = new Chess();
+        let playerColor = 'w';
+        let thinking = false;
+        let selectedSquare = null;
+
+        const config = {
+            draggable: false, 
+            position: 'start',
+            pieceTheme: 'img/{piece}.png', 
+            onSquareClick: onSquareClick
+        };
+        board = Chessboard('mainBoard', config);
+        
+        $('#startBtn').on('click', startNewGame);
+        $('#undoBtn').on('click', undoMove);
+        $('#closeModalBtn').on('click', closeModal);
+        $(window).resize(board.resize);
+
+        function startNewGame() {
+            game.reset();
+            board.position(game.fen());
+            updateStatus();
+            $('#pgn').html('');
+            selectedSquare = null;
+            removeHighlights();
+        }
+        
+        function undoMove() {
+            if (thinking) return;
+            game.undo(); 
+            game.undo(); 
+            board.position(game.fen());
+            updateStatus();
+            updatePGN();
+            selectedSquare = null;
+            removeHighlights();
+        }
+
+        // --- Click-to-Move Logic (with fix) ---
+        function onSquareClick(square, piece) {
+            if (thinking || game.game_over()) return;
+
+            const pieceOnSquare = game.get(square);
+            if (pieceOnSquare && pieceOnSquare.color !== playerColor && selectedSquare === null) {
+                return;
+            }
+
+            if (selectedSquare === null) {
+                if (pieceOnSquare && pieceOnSquare.color === game.turn()) {
+                    selectedSquare = square;
+                    highlightMoves(square);
+                }
+            } 
+            else {
+                const move = game.move({
+                    from: selectedSquare,
+                    to: square,
+                    promotion: 'q'
+                });
+
+                removeHighlights();
+
+                if (move === null) {
+                    // **FIX**: If the move is illegal, reset selection.
+                    // This handles clicking on an empty square or an invalid target.
+                    selectedSquare = null;
+                    return; // End the function here.
+                } 
+                
+                thinking = true;
+                updateStatus();
+                selectedSquare = null;
+                board.position(game.fen());
+
+                analyzeAndShowFeedback(move, game.history({verbose: true}));
+
+                window.setTimeout(makeSemiSmartMove, 250);
+            }
+        }
+        
+        function highlightMoves(square) {
+            $('#mainBoard .square-' + square).addClass('highlight-selected');
+            const moves = game.moves({ square: square, verbose: true });
+            if (moves.length === 0) return;
+            moves.forEach(move => {
+                $('#mainBoard .square-' + move.to).addClass('highlight-legal');
+            });
+        }
+        
+        function removeHighlights() {
+            $('.square-55d63').removeClass('highlight-selected highlight-legal');
+        }
+
+        // --- IMPROVED Computer Opponent ---
+        function makeSemiSmartMove() {
+            const possibleMoves = game.moves({ verbose: true });
+            if (possibleMoves.length === 0) {
+                updateStatus();
+                return;
+            }
+
+            let bestMove = null;
+            let bestValue = -9999;
+
+            possibleMoves.forEach(move => {
+                game.move(move.san);
+                let value = -evaluateBoard(game);
+                game.undo();
+                if (value > bestValue) {
+                    bestValue = value;
+                    bestMove = move;
+                }
+            });
+            
+            game.move(bestMove.san);
+            board.position(game.fen());
+            thinking = false;
+            updateStatus();
+            updatePGN();
+        }
+        
+        function evaluateBoard(game) {
+            let totalEvaluation = 0;
+            const pieces = game.SQUARES.map(s => game.get(s)).filter(p => p);
+            pieces.forEach(piece => {
+                totalEvaluation += getPieceValue(piece.type) * (piece.color === 'w' ? 1 : -1);
+            });
+            return totalEvaluation;
+        }
+
+        function getPieceValue(piece) {
+            if (piece === 'p') return 10;
+            if (piece === 'r') return 50;
+            if (piece === 'n') return 30;
+            if (piece === 'b') return 30;
+            if (piece === 'q') return 90;
+            if (piece === 'k') return 900;
+            return 0;
+        }
+
+
+        function updateStatus() {
+            let status = '';
+            const moveColor = (game.turn() === 'w') ? 'الأبيض' : 'الأسود';
+            if (game.in_checkmate()) { status = `انتهت اللعبة، كش ملك للفريق ${moveColor}.`; }
+            else if (game.in_draw()) { status = 'انتهت اللعبة، تعادل.'; }
+            else {
+                status = `دور الفريق ${moveColor} للعب`;
+                if (thinking) { status = 'المدرب الخبير يحلل...'; }
+            }
+            $('#gameStatus').html(status);
+        }
+        
+        function updatePGN() {
+            $('#pgn').html(game.pgn());
+            $('.pgn-container').scrollTop($('.pgn-container')[0].scrollHeight);
+        }
+        
+        function closeModal() {
+            $('#feedbackModal').removeClass('visible');
+        }
+
+        // ==========================================================================
+        // 9. ADVANCED Analysis Engine (محرك التحليل المتقدم)
+        // ==========================================================================
+        function analyzeAndShowFeedback(move, history) {
+            const turnNumber = history.length;
+            const tempGame = new Chess(game.fen());
+            tempGame.undo(); // Go back to the state before the move was made
+
+            let appliedPrinciples = [];
+
+            // Iterate over all principles in the knowledge base
+            for (const key in chessPrinciples) {
+                const principle = chessPrinciples[key];
+                
+                // Check for blunders first
+                if (principle.id === 'BLUNDER_HANGING_PIECE') {
+                    // Check if the piece moved to a square where it can be captured by a lesser-value piece for free
+                    const originalFen = tempGame.fen();
+                    tempGame.move(move.san); // Make the move again
+                    if (isPieceHanging(move.to, tempGame)) {
+                         appliedPrinciples.push({ ...principle, triggered: true });
+                    }
+                    tempGame.load(originalFen); // Revert
+                }
+                
+                // Check for good/bad opening principles
+                if (turnNumber <= 12) {
+                    if (principle.check(move, tempGame, history)) {
+                        appliedPrinciples.push({ ...principle, triggered: true });
+                    }
+                }
+                 // Check for endgame principles
+                if (isEndgame(tempGame)) {
+                     if (principle.check(move, tempGame, history)) {
+                        appliedPrinciples.push({ ...principle, triggered: true });
+                    }
+                }
+            }
+
+            // Prioritize feedback
+            appliedPrinciples.sort((a, b) => b.priority - a.priority);
+
+            let feedback = null;
+            if (appliedPrinciples.length > 0) {
+                const topPrinciple = appliedPrinciples[0];
+                if (topPrinciple.id.startsWith('BLUNDER')) {
+                    feedback = { type: 'blunder', title: 'خطأ فادح!', icon: '🔥', moveExplanation: `النقلة ${move.san} خطيرة جدا!`, principle: topPrinciple, suggestion: 'دائما تحقق من سلامة قطعك قبل النقل.' };
+                } else if (topPrinciple.id.startsWith('MISTAKE')) {
+                    feedback = { type: 'mistake', title: 'خطأ استراتيجي', icon: '🤔', moveExplanation: `النقلة ${move.san} تخالف مبدأً هاماً.`, principle: topPrinciple, suggestion: 'حاول التفكير في العواقب طويلة المدى للنقلة.' };
+                } else if (topPrinciple.id.startsWith('GOOD')) {
+                    feedback = { type: 'good', title: 'نقلة جيدة', icon: '👍', moveExplanation: `النقلة ${move.san} تطبق مبدأً جيداً.`, principle: topPrinciple, suggestion: 'استمر على هذا النهج.' };
+                } else if (topPrinciple.id.startsWith('OPENING') || topPrinciple.id.startsWith('ENDGAME')) {
+                     feedback = { type: 'excellent', title: 'نقلة ممتازة!', icon: '⭐', moveExplanation: `أحسنت! النقلة ${move.san} تتبع أفضل الممارسات.`, principle: topPrinciple, suggestion: 'هكذا يلعب المحترفون!' };
+                }
+            }
+            
+            // Default feedback if no specific principle was triggered
+            if (!feedback) {
+                feedback = {
+                    type: 'good', title: 'نقلة قياسية', icon: '😊',
+                    moveExplanation: `النقلة ${move.san} هي نقلة منطقية ومقبولة في هذا الوضع.`,
+                    principle: { name: 'لعب آمن', description: 'لم ترتكب أي أخطاء واضحة وحافظت على وضع جيد.' },
+                    suggestion: 'استمر في البحث عن خطة لتحسين وضعك.'
+                };
+            }
+
+            showModal(feedback);
+        }
+
+        function showModal(feedback) {
+            const { type, title, icon, moveExplanation, principle, suggestion } = feedback;
+            
+            $('#modalHeader').removeClass().addClass('modal-header ' + type);
+            $('#modalIcon').text(icon);
+            $('#modalTitle').text(title);
+            
+            $('#moveExplanation').text(moveExplanation).css('border-color', getBorderColor(type));
+            
+            if (principle) {
+                 $('#principleExplanation').html(`<strong>${principle.name} (الأهمية: ${principle.priority || 'عالية'})</strong><p>${principle.description}</p>`).css('border-color', getBorderColor(type));
+            } else {
+                 $('#principleExplanation').text('لا توجد قاعدة مباشرة.').css('border-color', '#ccc');
+            }
+
+            $('#suggestionExplanation').text(suggestion).css('border-color', getBorderColor(type));
+            $('#feedbackModal').addClass('visible');
+        }
+
+        function getBorderColor(type) {
+             switch(type) {
+                case 'excellent': return 'var(--success-color)';
+                case 'good': return 'var(--info-color)';
+                case 'inaccuracy': return 'var(--warning-color)';
+                case 'mistake': return 'var(--orange-color)';
+                case 'blunder': return 'var(--danger-color)';
+                default: return '#ccc';
+            }
+        }
+
+        startNewGame();
+    });
+    </script>
+
+</body>
+</html>
