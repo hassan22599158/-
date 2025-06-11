@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة الشطرنج الاحترافية - المدرب الذكي</title>
+    
+    <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <script src="js/chessboard-1.0.0.min.js"></script>
+    <script src="js/chess.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ==========================================================================
+           1. Core Design System & Variables (النظام التصميمي الأساسي والمتغيرات)
+           ========================================================================== */
+        :root {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #0dcaf0;
+            
+            --light-bg: #f8f9fa;
+            --dark-text: #212529;
+            --muted-text: #6c757d;
+            
+            --card-bg: #ffffff;
+            --modal-bg: #ffffff;
+            
+            --border-radius-lg: 16px;
+            --border-radius-md: 8px;
+            
+            --shadow-strong: 0 8px 24px rgba(0, 0, 0, 0.15);
+            --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+            --font-family-main: 'Cairo', sans-serif;
+        }
+
+        /* ==========================================================================
+           2. General Body & Layout Styles (الأنماط العامة للجسم والتخطيط)
+           ========================================================================== */
+        body {
+            font-family: var(--font-family-main);
+            direction: rtl;
+            text-align: right;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 1.5rem;
+        }
+
+        header h1 {
+            font-weight: 900;
+            font-size: 3rem;
+            color: var(--primary-color);
+        }
+
+        header p {
+            font-size: 1.25rem;
+            color: var(--muted-text);
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr; /* يتحول إلى عمود واحد في الشاشات الصغيرة */
+            }
+        }
+
+        /* ==========================================================================
+           3. Card Component (مكون البطاقة)
+           ========================================================================== */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-light);
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* ==========================================================================
+           4. Game Area & Chessboard (منطقة اللعب والرقعة)
+           ========================================================================== */
+        #mainBoard {
+            width: 100%;
+            max-width: 700px; /* حجم أقصى للرقعة */
+            margin: 0 auto;
+            box-shadow: var(--shadow-strong);
+            border-radius: var(--border-radius-md);
+        }
+
+        .game-status {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 1rem;
+            border-radius: var(--border-radius-md);
+            background-color: #e9ecef;
+        }
+        
+        /* ==========================================================================
+           5. Controls & Information Panel (لوحة التحكم والمعلومات)
+           ========================================================================== */
+        .controls-panel .btn {
+            display: block;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            border: none;
+            border-radius: var(--border-radius-md);
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #b02a37;
+        }
+
+        .pgn-container {
+            font-family: monospace, sans-serif;
+            text-align: left;
+            direction: ltr;
+            background-color: #e9ecef;
+            padding: 1rem;
+            border-radius: var(--border-radius-md);
+            height: 200px;
+            overflow-y: scroll;
+            line-height: 1.5;
+            border: 1px solid #ccc;
+        }
+
+        /* ==========================================================================
+           6. Feedback Modal (الرسالة المنبثقة للتحليل)
+           ========================================================================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s 0.3s;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal-content {
+            background-color: var(--modal-bg);
+            padding: 2.5rem;
+            border-radius: var(--border-radius-lg);
+            width: 90%;
+            max-width: 600px;
+            box-shadow: var(--shadow-strong);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid;
+        }
+        
+        .modal-header .icon {
+            font-size: 2.5rem;
+        }
+        
+        .modal-header .title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        /* Dynamic coloring for modal header */
+        .modal-header.excellent { border-color: var(--success-color); color: var(--success-color); }
+        .modal-header.good { border-color: var(--info-color); color: var(--info-color); }
+        .modal-header.inaccuracy { border-color: var(--warning-color); color: var(--warning-color); }
+        .modal-header.mistake { border-color: #fd7e14; color: #fd7e14; } /* Orange */
+        .modal-header.blunder { border-color: var(--danger-color); color: var(--danger-color); }
+
+        .modal-body h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-body .explanation {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: var(--border-radius-md);
+            border-right: 5px solid;
+        }
+
+        .modal-footer {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .modal-footer .btn-close {
+             background-color: var(--muted-text);
+             color: white;
+             padding: 0.75rem 2.5rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>المدرب الذكي</h1>
+            <p>حلل كل نقلة، تعلم المبادئ، واحترف الشطرنج</p>
+        </header>
+
+        <main class="main-layout">
+            <div class="game-area-container">
+                <div class="card">
+                    <div id="mainBoard"></div>
+                </div>
+                <div id="gameStatus" class="game-status">دور الأبيض للعب</div>
+            </div>
+
+            <aside class="info-panel">
+                <div class="card">
+                    <h2 class="card-header">لوحة التحكم</h2>
+                    <div class="controls-panel">
+                        <button id="startBtn" class="btn btn-primary">ابدأ لعبة جديدة</button>
+                        <button id="undoBtn" class="btn btn-danger">تراجع عن النقلة</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2 class="card-header">سجل النقلات (PGN)</h2>
+                    <div id="pgn" class="pgn-container"></div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <div id="feedbackModal" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modalHeader" class="modal-header">
+                <span id="modalIcon" class="icon"></span>
+                <span id="modalTitle" class="title"></span>
+            </div>
+            <div id="modalBody" class="modal-body">
+                <div>
+                    <h3>شرح النقلة:</h3>
+                    <div id="moveExplanation" class="explanation"></div>
+                </div>
+                <div>
+                    <h3>القاعدة المطبقة / المهملة:</h3>
+                    <div id="principleExplanation" class="explanation"></div>
+                </div>
+                <div>
+                    <h3>النقلة الأفضل كانت:</h3>
+                    <div id="suggestionExplanation" class="explanation"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="closeModalBtn" class="btn btn-close">فهمت، أكمل اللعب</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ==========================================================================
+    // 7. Chess Knowledge Base (قاعدة البيانات المعرفية للشطرنج)
+    // This is the core "brain" of the coach.
+    // ==========================================================================
+    const chessPrinciples = {
+        // --- OPENING PRINCIPLES (مبادئ الافتتاح) ---
+        'center-control': {
+            id: 'center-control',
+            name: 'السيطرة على المركز',
+            priority: 10,
+            description: 'السيطرة على المربعات المركزية (e4, d4, e5, d5) هي أهم هدف في الافتتاح. القطع في المركز تسيطر على أكبر مساحة وتكون أكثر فاعلية.',
+            whenGood: 'عندما تقوم بتحريك بيدق e4 أو d4، أو تطور قطعة للسيطرة على هذه المربعات.',
+            whenBad: 'عندما تتجاهل المركز وتلعب على الأجنحة مبكراً جداً.'
+        },
+        'develop-knights': {
+            id: 'develop-knights',
+            name: 'تطوير الأحصنة أولاً',
+            priority: 9,
+            description: 'طور أحصنتك نحو المركز قبل الفيلة. الأحصنة أقل تأثراً بهيكل البيادق ويمكنها القفز فوق القطع الأخرى.',
+            whenGood: 'عندما تلعب Nf3 أو Nc3 في أول النقلات.',
+            whenBad: 'عندما تترك أحصنتك في الصف الخلفي وتطور قطعاً أخرى مثل الوزير أو القلعة.'
+        },
+        'develop-bishops': {
+            id: 'develop-bishops',
+            name: 'تطوير الفيلة',
+            priority: 8,
+            description: 'بعد الأحصنة، طور فيلتك إلى مربعات نشطة حيث تسيطر على أقطار طويلة ومهمة.',
+            whenGood: 'عندما تضع فيلك في مربع مثل c4 أو g2 (Fianchetto).',
+            whenBad: 'عندما تحبس فيلك خلف بيادقك.'
+        },
+        'king-safety-castle': {
+            id: 'king-safety-castle',
+            name: 'تأمين الملك (التبييت)',
+            priority: 10,
+            description: 'قم بالتبييت في أقرب فرصة ممكنة. هذه النقلة تحمي ملكك وتُدخل القلعة في اللعب.',
+            whenGood: 'عندما تقوم بالتبييت في أول 7-10 نقلات.',
+            whenBad: 'عندما تؤخر التبييت وتترك ملكك في المركز عرضة للهجوم.'
+        },
+        'avoid-queen-early': {
+            id: 'avoid-queen-early',
+            name: 'لا تخرج الوزير مبكراً',
+            priority: 8,
+            description: 'تجنب إخراج وزيرك في وقت مبكر جداً. يمكن أن يصبح هدفاً لقطع الخصم، مما يجبرك على إضاعة نقلات في تحريكه ويساعد خصمك على التطوير.',
+            whenGood: 'عندما يبقى وزيرك في الخلف حتى يتم تطوير معظم القطع الخفيفة.',
+            whenBad: 'عندما تلعب Qa4 أو Qh5 في النقلة الثانية أو الثالثة بدون سبب تكتيكي قاهر.'
+        },
+        'avoid-pawn-moves': {
+            id: 'avoid-pawn-moves',
+            name: 'قلل من حركات البيادق غير الضرورية',
+            priority: 7,
+            description: 'في الافتتاح، كل نقلة ثمينة. ركز على تطوير القطع بدلاً من تحريك بيادق كثيرة. كل حركة بيدق تخلق نقاط ضعف دائمة.',
+            whenGood: 'عندما تكون حركات بيادقك تخدم هدفاً استراتيجياً واضحاً (فتح خطوط، السيطرة على المركز).',
+            whenBad: 'عندما تحرك بيادق الأجنحة (a, b, g, h) بدون داعٍ.'
+        },
+        'avoid-f-pawn': {
+            id: 'avoid-f-pawn',
+            name: 'تجنب تحريك بيدق الـ F',
+            priority: 9,
+            description: 'تحريك البيدق الموجود أمام الفيل بجانب الملك (f2/f7) يكشف ملكك بشكل خطير للغاية وهو من أسوأ الأخطاء الموضعية في الافتتاح.',
+            whenGood: 'نادراً جداً وفي مواقف مدروسة من قبل المحترفين.',
+            whenBad: 'في معظم الحالات، خصوصاً قبل التبييت.'
+        },
+        'connect-rooks': {
+            id: 'connect-rooks',
+            name: 'ربط القلاع',
+            priority: 7,
+            description: 'بعد تطوير كل قطعك الخفيفة والتبييت، حرك وزيرك من مربعه الأولي للسماح للقلاع بحماية بعضها البعض والسيطرة على الصف الخلفي.',
+            whenGood: 'عندما لا توجد أي قطعة بين القلعتين في الصف الأول/الثامن.',
+            whenBad: 'عندما تظل القلاع معزولة وغير قادرة على دعم بعضها البعض.'
+        },
+        // --- MIDDLEGAME TACTICS (تكتيكات وسط اللعبة) ---
+        'blunder-piece': {
+            id: 'blunder-piece',
+            name: 'خطأ فادح (خسارة قطعة)',
+            priority: 100,
+            description: 'لقد قمت بنقلة تركت إحدى قطعك بدون حماية ويمكن للخصم أخذها مجاناً. هذا هو أسوأ أنواع الأخطاء.',
+            whenGood: 'لا يوجد.',
+            whenBad: 'دائماً. قبل كل نقلة، تحقق من كل قطعك (Checks, Captures, Threats).'
+        },
+        'missed-tactic': {
+            id: 'missed-tactic',
+            name: 'تفويت فرصة تكتيكية',
+            priority: 50,
+            description: 'كان لديك فرصة لتنفيذ تكتيك قوي (مثل الشوكة، السيخ، الكش المزدوج) لكنك لم تنتبه له ولعبت نقلة عادية.',
+            whenGood: 'لا يوجد.',
+            whenBad: 'عندما تركز على خطتك فقط وتتجاهل إمكانيات الهجوم المتاحة.'
+        },
+        'improve-worst-piece': {
+            id: 'improve-worst-piece',
+            name: 'تحسين أسوأ قطعة',
+            priority: 20,
+            description: 'في وسط اللعبة، ابحث عن القطعة الأقل فاعلية لديك (مثلاً، حصان على الحافة، فيل محبوس) وحاول نقلها إلى مربع أفضل.',
+            whenGood: 'عندما تنقل قطعة خاملة إلى موقع هجومي أو دفاعي أفضل.',
+            whenBad: 'عندما تستمر في اللعب بقطع نشطة وتترك قطعة أو اثنتين بدون دور في اللعبة.'
+        },
+        // --- ENDGAME PRINCIPLES (مبادئ نهاية اللعبة) ---
+        'king-activity-endgame': {
+            id: 'king-activity-endgame',
+            name: 'تفعيل الملك في نهاية اللعبة',
+            priority: 40,
+            description: 'على عكس الافتتاح، الملك يصبح قطعة هجومية قوية في نهاية اللعبة. قم بإحضاره إلى وسط الرقعة للمساعدة في الهجوم والدفاع.',
+            whenGood: 'عندما يتحرك ملكك نحو المركز بعد تبديل معظم القطع القوية.',
+            whenBad: 'عندما يبقى ملكك في الزاوية خاملاً في نهاية اللعبة.'
+        },
+        // ... يمكن إضافة مئات القواعد هنا
+    };
+
+    // ==========================================================================
+    // 8. Core Game Logic (منطق اللعبة الأساسي)
+    // ==========================================================================
+    $(document).ready(function() {
+        let board = null;
+        const game = new Chess();
+        let playerColor = 'w'; // Player is always white for simplicity
+        let thinking = false;
+
+        // --- Board Configuration ---
+        const config = {
+            draggable: true,
+            position: 'start',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd
+        };
+        board = Chessboard('mainBoard', config);
+
+        // --- Event Handlers ---
+        $('#startBtn').on('click', startNewGame);
+        $('#undoBtn').on('click', undoMove);
+        $('#closeModalBtn').on('click', closeModal);
+
+        function startNewGame() {
+            game.reset();
+            board.position(game.fen());
+            updateStatus();
+            $('#pgn').html('');
+        }
+        
+        function undoMove() {
+            if (thinking) return;
+            game.undo(); // Undo computer's move
+            game.undo(); // Undo player's move
+            board.position(game.fen());
+            updateStatus();
+            updatePGN();
+        }
+
+        function onDragStart(source, piece) {
+            // Do not pick up pieces if the game is over
+            if (game.game_over()) return false;
+
+            // Only pick up pieces for the side to move
+            if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+                (game.turn() === 'b' && piece.search(/^w/) !== -1) ||
+                (game.turn() !== playerColor)) {
+                return false;
+            }
+        }
+
+        function onDrop(source, target) {
+            thinking = true;
+            updateStatus();
+            
+            // See if the move is legal
+            const move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q' // NOTE: always promote to a queen for example simplicity
+            });
+
+            // Illegal move
+            if (move === null) {
+                return 'snapback';
+            }
+
+            // --- THIS IS THE COACHING LOGIC! ---
+            analyzeAndShowFeedback(move);
+
+            // Make random computer move after a short delay
+            window.setTimeout(makeComputerMove, 250);
+        }
+
+        function onSnapEnd() {
+            board.position(game.fen());
+        }
+        
+        function makeComputerMove() {
+            const possibleMoves = game.moves();
+
+            // Game over
+            if (possibleMoves.length === 0) {
+                // Determine result
+                return;
+            }
+
+            const randomIdx = Math.floor(Math.random() * possibleMoves.length);
+            game.move(possibleMoves[randomIdx]);
+            board.position(game.fen());
+            thinking = false;
+            updateStatus();
+            updatePGN();
+        }
+
+        // --- UI Update Functions ---
+        function updateStatus() {
+            let status = '';
+            const moveColor = (game.turn() === 'w') ? 'الأبيض' : 'الأسود';
+
+            if (game.in_checkmate()) {
+                status = `انتهت اللعبة، كش ملك للفريق ${moveColor}.`;
+            } else if (game.in_draw()) {
+                status = 'انتهت اللعبة، تعادل.';
+            } else {
+                status = `دور الفريق ${moveColor} للعب`;
+                if (thinking) {
+                    status = 'المدرب يفكر...';
+                }
+            }
+            $('#gameStatus').html(status);
+        }
+        
+        function updatePGN() {
+            $('#pgn').html(game.pgn());
+            // Scroll to bottom
+            $('.pgn-container').scrollTop($('.pgn-container')[0].scrollHeight);
+        }
+        
+        function closeModal() {
+            $('#feedbackModal').removeClass('visible');
+        }
+
+        // ==========================================================================
+        // 9. The Intelligent Coach Analysis Engine (محرك التحليل الذكي للمدرب)
+        // ==========================================================================
+        function analyzeAndShowFeedback(move) {
+            // This is a simplified analysis engine. A real one would use Stockfish.
+            // Here, we'll use rules to determine the quality of the move.
+            
+            let feedback = {
+                type: 'good', // 'excellent', 'good', 'inaccuracy', 'mistake', 'blunder'
+                title: 'نقلة جيدة',
+                icon: '😊',
+                moveExplanation: 'نقلة منطقية تحسن من وضعك.',
+                principle: null,
+                suggestion: 'لا توجد نقلة أفضل بشكل واضح في هذا الموقف البسيط.'
+            };
+
+            const turnNumber = game.history().length;
+            const piece = move.piece.toUpperCase();
+
+            // --- BLUNDER CHECK (The most important check) ---
+            // Simulate the move, then see if the opponent has a capture that wins material
+            // This is a very simplified check.
+            const tempGame = new Chess(game.fen());
+            // A more advanced check would use a real engine's evaluation score change
+            
+            // --- OPENING ANALYSIS ---
+            if (turnNumber <= 10) {
+                 // Bad move: Moving the f-pawn
+                if (piece === 'P' && (move.from === 'f2' || move.from === 'f7')) {
+                    feedback = {
+                        type: 'blunder',
+                        title: 'خطأ فادح!',
+                        icon: '🔥',
+                        moveExplanation: `تحريك بيدق الـ 'f' في الافتتاح يكشف ملكك بشكل خطير للغاية.`,
+                        principle: chessPrinciples['avoid-f-pawn'],
+                        suggestion: 'كان يجب تطوير قطعة أخرى مثل الحصان (Nf3) أو التبييت.'
+                    };
+                }
+                // Bad move: Moving queen too early
+                else if (piece === 'Q' && turnNumber < 4) {
+                     feedback = {
+                        type: 'inaccuracy',
+                        title: 'نقلة غير دقيقة',
+                        icon: '🤔',
+                        moveExplanation: `لقد أخرجت وزيرك مبكراً جداً، مما يجعله هدفاً سهلاً لقطع الخصم.`,
+                        principle: chessPrinciples['avoid-queen-early'],
+                        suggestion: 'ركز على تطوير الأحصنة والفيلة أولاً.'
+                    };
+                }
+                // Good move: Center control
+                else if (piece === 'P' && (move.to === 'e4' || move.to === 'd4') && turnNumber === 1) {
+                     feedback = {
+                        type: 'excellent',
+                        title: 'نقلة ممتازة!',
+                        icon: '⭐',
+                        moveExplanation: `بدء اللعبة بالسيطرة على المركز هو أفضل استراتيجية افتتاحية.`,
+                        principle: chessPrinciples['center-control'],
+                        suggestion: 'استمر بتطوير قطعك لدعم سيطرتك على المركز.'
+                    };
+                }
+                // Good move: Developing a knight
+                 else if (piece === 'N' && (move.to === 'f3' || move.to === 'c3')) {
+                     feedback = {
+                        type: 'excellent',
+                        title: 'تطوير مثالي!',
+                        icon: '👍',
+                        moveExplanation: `تطوير الحصان نحو المركز هو نقلة قوية جداً في الافتتاح.`,
+                        principle: chessPrinciples['develop-knights'],
+                        suggestion: 'الآن فكر في تطوير الفيل أو التبييت.'
+                    };
+                }
+                 // Good move: Castling
+                 else if (move.flags.includes('k') || move.flags.includes('q')) { // 'k' for kingside, 'q' for queenside castling
+                     feedback = {
+                        type: 'excellent',
+                        title: 'نقلة أساسية!',
+                        icon: '🏰',
+                        moveExplanation: `التبييت هو أهم نقلة لتأمين ملكك. أحسنت!`,
+                        principle: chessPrinciples['king-safety-castle'],
+                        suggestion: 'الآن ملكك آمن، ابدأ في التخطيط لهجوم في وسط اللعبة.'
+                    };
+                }
+            } else {
+                 // --- MIDDLEGAME/GENERIC ANALYSIS (Placeholder) ---
+                 // A real engine would be needed here.
+                 feedback.moveExplanation = `النقلة ${move.san}. في وسط اللعبة، ركز على تحسين وضع قطعك وخلق تهديدات.`;
+                 feedback.principle = chessPrinciples['improve-worst-piece'];
+                 feedback.suggestion = 'ابحث دائما عن القطعة الأقل فاعلية لديك وقم بتحسين موقعها.';
+            }
+
+            // Show the modal with the collected feedback
+            showModal(feedback);
+        }
+
+        function showModal(feedback) {
+            const { type, title, icon, moveExplanation, principle, suggestion } = feedback;
+            
+            // Update modal content
+            $('#modalHeader').removeClass().addClass('modal-header ' + type);
+            $('#modalIcon').text(icon);
+            $('#modalTitle').text(title);
+            
+            $('#moveExplanation').text(moveExplanation).css('border-color', getBorderColor(type));
+            
+            if (principle) {
+                 $('#principleExplanation').html(`
+                    <strong>${principle.name} (الأولوية: ${principle.priority})</strong>
+                    <p>${principle.description}</p>
+                 `).css('border-color', getBorderColor(type));
+            } else {
+                 $('#principleExplanation').text('لا توجد قاعدة مباشرة، لكنها نقلة جيدة بشكل عام.').css('border-color', '#ccc');
+            }
+
+            $('#suggestionExplanation').text(suggestion).css('border-color', getBorderColor(type));
+
+            // Display the modal
+            $('#feedbackModal').addClass('visible');
+        }
+
+        function getBorderColor(type) {
+             switch(type) {
+                case 'excellent': return 'var(--success-color)';
+                case 'good': return 'var(--info-color)';
+                case 'inaccuracy': return 'var(--warning-color)';
+                case 'mistake': return '#fd7e14';
+                case 'blunder': return 'var(--danger-color)';
+                default: return '#ccc';
+            }
+        }
+
+        // Initialize
+        startNewGame();
+    });
+    </script>
+
+</body>
+</html>
