@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدرب الشطرنج الخبير</title>
+    <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+    <style>
+        /* =================================
+           الأنماط الأساسية والهيكل العام (تم إصلاحها لتكون متجاوبة)
+           ================================= */
+        :root {
+            --primary-bg: #2b2b2b;
+            --secondary-bg: #3c3f41;
+            --font-color: #a9b7c6;
+            --border-color: #555;
+            --highlight-color: #4e8dff;
+            --success-color: #4caf50;
+            --warning-color: #ffc107;
+            --danger-color: #f44336;
+            --white-eval: #f0f0f0;
+            --black-eval: #4a4a4a;
+            --legal-move-highlight: rgba(40, 167, 69, 0.4); /* لون تمييز النقلات المتاحة */
+            --correct-move-highlight: rgba(40, 167, 69, 0.8); /* لون تمييز النقلة الصحيحة */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--font-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .main-container {
+            display: flex;
+            flex-wrap: wrap; /* أهم خاصية لإصلاح المشكلة */
+            justify-content: center;
+            gap: 25px;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .board-and-info-container {
+            flex: 2; /* اجعل هذا الجزء يأخذ مساحة أكبر */
+            min-width: 320px; /* أقل عرض ممكن */
+            max-width: 800px;
+        }
+
+        .board-container {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        #myBoard {
+            width: 100%;
+        }
+
+        .evaluation-bar-container {
+            width: 100%;
+            height: 20px;
+            background-color: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .evaluation-bar { display: flex; width: 100%; }
+        .white-bar { background-color: var(--white-eval); transition: width 0.5s ease-in-out; }
+        .black-bar { background-color: var(--black-eval); transition: width 0.5s ease-in-out; }
+
+        /* =================================
+           لوحة التحكم والإعدادات
+           ================================= */
+        .controls-container {
+            flex: 1; /* اجعل هذا الجزء يأخذ مساحة أقل */
+            min-width: 340px;
+            max-width: 400px;
+        }
+
+        .controls {
+            background-color: var(--secondary-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .controls h2, .controls h3, .info-panel h3 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+            color: #fff;
+        }
+        
+        .control-group label { display: block; margin-bottom: 8px; font-weight: 600; }
+        select, button { width: 100%; padding: 12px; border-radius: 5px; border: 1px solid var(--border-color); background-color: #45494a; color: var(--font-color); font-size: 16px; cursor: pointer; }
+        button { background-color: var(--highlight-color); color: #fff; font-weight: bold; transition: background-color 0.2s; }
+        button:hover { background-color: #3a7ee0; }
+        #status { padding: 12px; background-color: var(--primary-bg); border-radius: 5px; text-align: center; font-size: 1.1em; font-weight: bold; min-height: 50px; }
+
+        /* =================================
+           سجل النقلات وقواعد الاستراتيجية
+           ================================= */
+        .info-panel { margin-top: 20px; }
+        .pgn-container { background-color: var(--primary-bg); padding: 15px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 15px; line-height: 1.6; white-space: pre-wrap; border: 1px solid var(--border-color); }
+        #strategy-rules { background-color: var(--primary-bg); padding: 15px; border-radius: 5px; margin-top: 20px; min-height: 150px; border: 1px solid var(--border-color); }
+        #strategy-rules h4 { margin-top: 0; color: var(--highlight-color); }
+        #strategy-rules ul { padding-right: 20px; margin: 0; }
+        #strategy-rules li { margin-bottom: 8px; }
+
+        /* =================================
+           التمييز والنافذة المنبثقة
+           ================================= */
+        .highlight-legal {
+            background: var(--legal-move-highlight);
+        }
+        .highlight-correct {
+            box-shadow: inset 0 0 3px 3px var(--correct-move-highlight) !important;
+        }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
+        .modal.visible { display: flex; }
+        .modal-content { background-color: var(--secondary-bg); padding: 30px; border: 1px solid var(--border-color); width: 90%; max-width: 550px; border-radius: 10px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
+        .modal-content h3 { margin-top: 0; font-size: 1.8em; }
+        .modal-content .priority-1 { color: var(--danger-color); }
+        .modal-content .priority-2 { color: var(--warning-color); }
+        .modal-content #modal-rule { font-size: 1.2em; margin-bottom: 15px; }
+        .modal-content #modal-why { font-size: 1em; background-color: var(--primary-bg); padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+        .modal-buttons { display: flex; gap: 15px; justify-content: center; }
+        .modal-buttons button { width: auto; padding: 10px 25px; }
+        #show-correct-move-btn { background-color: var(--success-color); }
+        #close-modal-btn { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        
+        <div class="board-and-info-container">
+            <div class="board-container">
+                <div id="myBoard"></div>
+            </div>
+            <div class="evaluation-bar-container">
+                <div class="evaluation-bar">
+                    <div class="white-bar" id="white-eval-bar" style="width: 50%;"></div>
+                    <div class="black-bar" id="black-eval-bar" style="width: 50%;"></div>
+                </div>
+            </div>
+            <div class="info-panel">
+                <h3>سجل النقلات (PGN)</h3>
+                <div id="pgn-container" class="pgn-container"></div>
+                <h3>قواعد الاستراتيجية المختارة</h3>
+                <div id="strategy-rules">لم يتم اختيار استراتيجية بعد.</div>
+            </div>
+        </div>
+
+        <div class="controls-container">
+            <div class="controls">
+                <h2>مدرب الشطرنج الخبير</h2>
+                <div class="control-group">
+                    <label for="strategy-select">اختر الاستراتيجية للتعلم:</label>
+                    <select id="strategy-select">
+                        <option value="none" selected>بدون استراتيجية (لعب حر)</option>
+                        <optgroup label="للأبيض">
+                            <option value="italian_game">الافتتاح الإيطالي</option>
+                            <option value="queens_gambit">غامبت الوزير</option>
+                            <option value="ruy_lopez">الافتتاح الإسباني (روي لوبيز)</option>
+                        </optgroup>
+                        <optgroup label="للأسود">
+                            <option value="sicilian_defense">الدفاع الصقلي</option>
+                             <option value="kings_indian_defense">دفاع الملك الهندي</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="difficulty-select">مستوى صعوبة الكمبيوتر:</label>
+                    <select id="difficulty-select">
+                        <option value="5">مبتدئ (عمق 5)</option>
+                        <option value="10" selected>متوسط (عمق 10)</option>
+                        <option value="15">محترف (عمق 15)</option>
+                        <option value="20">خبير (عمق 20)</option>
+                    </select>
+                </div>
+                <button id="reset-button">بدء لعبة جديدة</button>
+                <h3>حالة اللعبة</h3>
+                <div id="status">اختر الإعدادات وابدأ اللعب.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="move-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title">نقلة غير دقيقة!</h3>
+            <p id="modal-rule">هذه النقلة تخالف أحد مبادئ الاستراتيجية.</p>
+            <p id="modal-why">السبب...</p>
+            <div class="modal-buttons">
+                <button id="show-correct-move-btn">أرني النقلة الأفضل</button>
+                <button id="close-modal-btn">تجاهل ومتابعة</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <script src="js/chessboard-1.0.0.min.js"></script>
+    <script src="js/chess.min.js"></script>
+    <script src="js/stockfish.js"></script>
+
+    <script>
+    // =================================================================================================
+    //                                      الجزء الأول: تهيئة اللعبة والحالة
+    // =================================================================================================
+    const SCRIPT_VERSION = "2.1.0-click-to-move";
+    console.log(`تم تحميل مدرب الشطرنج الخبير - إصدار ${SCRIPT_VERSION}`);
+
+    const gameState = {
+        board: null,
+        game: new Chess(),
+        engine: STOCKFISH(),
+        currentStrategyKey: 'none',
+        playerSide: 'w',
+        isPlayerTurn: true,
+        incorrectMoveInfo: null,
+        engineReady: false,
+        lastEval: { score: 0, mate: null },
+        selectedSquare: null, // *** جديد: لتتبع المربع الذي تم الضغط عليه
+        legalMoves: [],       // *** جديد: لتخزين النقلات المتاحة
+    };
+
+    const uiElements = {
+        boardEl: $('#myBoard'), // غيرنا الاسم لتمييزه عن كائن اللوحة
+        status: $('#status'),
+        pgn: $('#pgn-container'),
+        strategyRules: $('#strategy-rules'),
+        strategySelect: $('#strategy-select'),
+        difficultySelect: $('#difficulty-select'),
+        resetButton: $('#reset-button'),
+        modal: $('#move-modal'),
+        modalTitle: $('#modal-title'),
+        modalRule: $('#modal-rule'),
+        modalWhy: $('#modal-why'),
+        showCorrectMoveBtn: $('#show-correct-move-btn'),
+        closeModalBtn: $('#close-modal-btn'),
+        whiteEvalBar: $('#white-eval-bar'),
+        blackEvalBar: $('#black-eval-bar'),
+    };
+
+    // =================================================================================================
+    //                                      الجزء الثاني: محرك الاستراتيجيات المفصل (بدون تغيير)
+    // =================================================================================================
+    const STRATEGIES = {
+        'italian_game': {
+            name: 'الافتتاح الإيطالي (Giuoco Piano)', side: 'w',
+            description: 'استراتيجية كلاسيكية تركز على السيطرة السريعة على مركز الرقعة، تطوير القطع بفعالية، والتحضير للتحصين مبكراً.',
+            phases: {
+                opening: [
+                    { id: 'e4', priority: 1, text: 'النقلة الأولى الحرجة: العب e4 للسيطرة على المركز فورًا.', check: (move, history) => history.length === 0 && move.san === 'e4', suggestion: { from: 'e2', to: 'e4' }, why: 'نقلة e4 تفتح المجال للفيل والوزير، وتسيطر على المربع المركزي الهام d5.' },
+                    { id: 'Nf3', priority: 1, text: 'النقلة الثانية الحرجة: طور الحصان إلى f3 لمهاجمة بيدق الخصم e5.', check: (move, history) => history.length === 2 && history[1].san === 'e5' && move.san === 'Nf3', suggestion: { from: 'g1', to: 'f3' }, why: 'تطوير الحصان هو مبدأ أساسي في الافتتاح. هذه النقلة تزيد الضغط على المركز وتجهز للتحصين.' },
+                    { id: 'Bc4', priority: 1, text: 'النقلة الثالثة الحرجة: العب Bc4 (الافتتاح الإيطالي) للضغط على أضعف نقطة (f7).', check: (move, history) => history.length === 4 && history[3].san === 'Nc6' && move.san === 'Bc4', suggestion: { from: 'f1', to: 'c4' }, why: 'الفيل في c4 يسيطر على وتر مهم ويضع ضغطاً تكتيكياً على الملك الأسود قبل التحصين.' },
+                    { id: 'c3', priority: 2, text: 'النقلة الرابعة الهامة: العب c3 لدعم المركز والتحضير لدفع البيدق d4.', check: (move, history) => history.length === 6 && move.san === 'c3', suggestion: { from: 'c2', to: 'c3' }, why: 'هذه النقلة تبني هرماً من البيادق في المركز وتجهز لتوسيع نفوذك.' },
+                    { id: 'castling', priority: 1, text: 'أولوية قصوى: قم بالتحصين (O-O) لتأمين ملكك وتفعيل القلعة.', check: (move, history) => game.hasCastled('w') || move.san === 'O-O', suggestion: { from: 'e1', to: 'g1' }, why: 'التحصين هو أهم نقلة دفاعية في الافتتاح. تأخيره يعرض ملكك لخطر الهجمات.' }
+                ]
+            }
+        },
+        'queens_gambit': { name: 'غامبت الوزير (Queen\'s Gambit)', side: 'w', description: 'افتتاح استراتيجي يهدف للسيطرة على المركز عبر التضحية المؤقتة ببيدق الجناح.', phases: { opening: [ { id: 'd4', priority: 1, text: 'النقلة الأولى الحرجة: العب d4 للسيطرة على المركز.', check: (move, history) => history.length === 0 && move.san === 'd4', suggestion: { from: 'd2', to: 'd4' }, why: 'نقلة d4 تسيطر على المربع e5 وتفتح المجال لفيل c1.' }, { id: 'c4', priority: 1, text: 'النقلة الثانية الحرجة: قدم غامبت الوزير بنقلة c4.', check: (move, history) => history.length === 2 && history[1].san === 'd5' && move.san === 'c4', suggestion: { from: 'c2', to: 'c4' }, why: 'هذه النقلة تتحدى سيطرة الأسود على المركز فوراً.' }, { id: 'Nc3', priority: 2, text: 'طور الحصان إلى c3 لزيادة الضغط على المركز واستعادة البيدق.', check: (move, history) => history.length === 4 && move.san === 'Nc3', suggestion: { from: 'b1', to: 'c3' }, why: 'تطوير القطع مع الضغط على المركز هو جوهر هذا الافتتاح.' } ] } },
+        'ruy_lopez': { name: 'الافتتاح الإسباني (Ruy López)', side: 'w', description: 'افتتاح قوي ومعقد يهدف إلى خلق ضغط طويل الأمد على موقف الأسود.', phases: { opening: [ { id: 'e4', priority: 1, text: 'العب e4 للسيطرة على المركز.', check: (move, history) => history.length === 0 && move.san === 'e4', suggestion: { from: 'e2', to: 'e4' }, why: 'النقلة الأفضل والأكثر شيوعاً لبدء اللعبة.' }, { id: 'Nf3', priority: 1, text: 'طور الحصان إلى f3 لمهاجمة بيدق e5.', check: (move, history) => history.length === 2 && history[1].san === 'e5' && move.san === 'Nf3', suggestion: { from: 'g1', to: 'f3' }, why: 'تطوير طبيعي يزيد الضغط ويجهز للتحصين.' }, { id: 'Bb5', priority: 1, text: 'العب Bb5 (روي لوبيز) للضغط على الحصان الذي يحمي بيدق e5.', check: (move, history) => history.length === 4 && history[3].san === 'Nc6' && move.san === 'Bb5', suggestion: { from: 'f1', to: 'b5' }, why: 'هذه النقلة تخلق تهديدات موضعية معقدة وتضع الأسود تحت ضغط فوري.' } ] } },
+        'sicilian_defense': { name: 'الدفاع الصقلي (Sicilian Defense)', side: 'b', description: 'رد عدواني على نقلة الأبيض 1.e4، يهدف إلى خلق عدم توازن في الموقف واللعب من أجل الفوز.', phases: { opening: [ { id: 'c5', priority: 1, text: 'رد على e4 بنقلة c5، جوهر الدفاع الصقلي.', check: (move, history) => history.length === 1 && history[0].san === 'e4' && move.san === 'c5', suggestion: { from: 'c7', to: 'c5' }, why: 'هذه النقلة تتحدى سيطرة الأبيض على المركز من الجناح، مما يؤدي إلى لعبة معقدة وغير متوازنة.' } ] } },
+        'kings_indian_defense': { name: 'دفاع الملك الهندي (King\'s Indian Defense)', side: 'b', description: 'افتتاح ديناميكي يسمح للأبيض ببناء مركز قوي، ثم يهاجمه الأسود لاحقاً.', phases: { opening: [ { id: 'Nf6', priority: 1, text: 'رد على d4 بنقلة Nf6، وهي النقلة الأكثر شيوعاً.', check: (move, history) => history.length === 1 && history[0].san === 'd4' && move.san === 'Nf6', suggestion: { from: 'g8', to: 'f6' }, why: 'تمنع هذه النقلة الأبيض من لعب e4 بسهولة وتطور قطعة بسرعة.' }, { id: 'g6', priority: 1, text: 'العب g6 للتحضير لوضع الفيل في g7 (fianchetto).', check: (move, history) => history.length === 3 && move.san === 'g6', suggestion: { from: 'g7', to: 'g6' }, why: 'الفيل في g7 سيصبح قطعة قوية جداً تسيطر على الوتر الطويل.' }, { id: 'Bg7', priority: 1, text: 'ضع الفيل في g7.', check: (move, history) => history.length === 5 && move.san === 'Bg7', suggestion: { from: 'f8', to: 'g7' }, why: 'يكمل خطة الـ fianchetto ويضع الفيل في أفضل مربع له.' } ] } }
+    };
+
+    // =================================================================================================
+    //                                  الجزء الثالث: التفاعل مع محرك Stockfish (بدون تغيير)
+    // =================================================================================================
+    gameState.engine.onmessage = function(event) {
+        const message = event.data;
+        if (message === 'uciok') { gameState.engineReady = true; gameState.engine.postMessage('isready'); }
+        const bestMoveMatch = message.match(/^bestmove ([a-h][1-8])([a-h][1-8])([qrbn])?/);
+        if (bestMoveMatch) { handleEngineMove(bestMoveMatch); }
+        const evalMatch = message.match(/score (cp|mate) (-?\d+)/);
+        if (evalMatch) { handleEngineEvaluation(evalMatch); }
+    };
+    gameState.engine.postMessage('uci');
+    function handleEngineMove(match) { gameState.game.move({ from: match[1], to: match[2], promotion: match[3] }); gameState.board.position(gameState.game.fen()); gameState.isPlayerTurn = true; updatePgn(); updateStatus(); }
+    function handleEngineEvaluation(match) { gameState.lastEval.mate = (match[1] === 'mate') ? parseInt(match[2], 10) : null; gameState.lastEval.score = (match[1] === 'cp') ? parseInt(match[2], 10) : (gameState.lastEval.mate > 0 ? 9999 : -9999); updateEvaluationBar(); }
+    function getAIMove() { if (!gameState.engineReady) { console.error("المحرك ليس جاهزاً بعد."); return; } gameState.isPlayerTurn = false; const difficulty = uiElements.difficultySelect.val(); gameState.engine.postMessage('position fen ' + gameState.game.fen()); gameState.engine.postMessage('go depth ' + difficulty); }
+
+    // =================================================================================================
+    //                                  الجزء الرابع: منطق اللعبة والتحقق من الاستراتيجية (بدون تغيير)
+    // =================================================================================================
+    function validatePlayerMoveAgainstStrategy(move) { if (gameState.currentStrategyKey === 'none') return null; const strategy = STRATEGIES[gameState.currentStrategyKey]; if (strategy.side !== gameState.playerSide) return null; const history = gameState.game.history({ verbose: true }); const gamePhase = getGamePhase(history.length); if (!strategy.phases[gamePhase]) return null; const rulesForPhase = strategy.phases[gamePhase].sort((a, b) => a.priority - b.priority); for (const rule of rulesForPhase) { if (rule.check && !rule.check(move, history) && rule.suggestion) { const tempGame = new Chess(gameState.game.fen()); const possibleMoves = tempGame.moves({ square: rule.suggestion.from, verbose: true }).map(m => m.to); if (possibleMoves.includes(rule.suggestion.to)) { return rule; } } } return null; }
+    function getGamePhase(moveCount) { if (moveCount < 20) return 'opening'; if (moveCount < 60) return 'middlegame'; return 'endgame'; }
+
+
+    // =================================================================================================
+    //                الجزء الخامس: دوال التفاعل الجديدة (منطق الضغط للتحريك) - *** محدث بالكامل ***
+    // =================================================================================================
+
+    // إزالة كل التمييزات من على الرقعة
+    function removeHighlights() {
+        uiElements.boardEl.find('.square-55d63').removeClass('highlight-legal');
+    }
+
+    // تمييز المربعات القانونية التي يمكن التحرك إليها
+    function highlightLegalMoves(square) {
+        const moves = gameState.game.moves({
+            square: square,
+            verbose: true
+        });
+
+        if (moves.length === 0) return [];
+
+        // تلوين المربعات المتاحة
+        moves.forEach(move => {
+            uiElements.boardEl.find('.square-' + move.to).addClass('highlight-legal');
+        });
+
+        return moves;
+    }
+
+    // الدالة الرئيسية التي يتم استدعاؤها عند الضغط على أي مربع
+    function onSquareClick(square, piece) {
+        // لا تفعل شيئاً إذا لم يكن دور اللاعب
+        if (!gameState.isPlayerTurn || gameState.game.game_over()) return;
+
+        // إذا ضغط اللاعب على مربع كان قد اختاره بالفعل، ألغ الاختيار
+        if (gameState.selectedSquare === square) {
+            gameState.selectedSquare = null;
+            removeHighlights();
+            return;
+        }
+
+        // إذا كان اللاعب قد اختار قطعة بالفعل (gameState.selectedSquare ليس فارغاً)
+        if (gameState.selectedSquare) {
+            const targetMove = gameState.legalMoves.find(m => m.to === square);
+            
+            // إذا ضغط على مربع قانوني، قم بتنفيذ النقلة
+            if (targetMove) {
+                performMove(gameState.selectedSquare, square);
+            } else { // إذا ضغط على مربع غير قانوني
+                // ألغ الاختيار الحالي
+                removeHighlights();
+                gameState.selectedSquare = null;
+                // تحقق مما إذا كان المربع الجديد يحتوي على قطعة أخرى للاعب
+                const pieceOnNewSquare = gameState.game.get(square);
+                if (pieceOnNewSquare && pieceOnNewSquare.color === gameState.playerSide) {
+                     selectPiece(square);
+                }
+            }
+        } else { // إذا لم يكن اللاعب قد اختار أي قطعة بعد
+            const pieceOnSquare = gameState.game.get(square);
+            if (pieceOnSquare && pieceOnSquare.color === gameState.playerSide) {
+                selectPiece(square);
+            }
+        }
+    }
+    
+    // دالة لاختيار قطعة وتظليل نقلاتها
+    function selectPiece(square) {
+        removeHighlights();
+        gameState.legalMoves = highlightLegalMoves(square);
+        if (gameState.legalMoves.length > 0) {
+            gameState.selectedSquare = square;
+        }
+    }
+
+    // دالة لتنفيذ النقلة وفحصها
+    function performMove(source, target) {
+        const moveResult = gameState.game.move({ from: source, to: target, promotion: 'q' });
+        
+        removeHighlights();
+        gameState.selectedSquare = null;
+        gameState.legalMoves = [];
+
+        // --- منطق المدرب الذكي ---
+        const violatedRule = validatePlayerMoveAgainstStrategy(moveResult);
+
+        if (violatedRule) {
+            gameState.incorrectMoveInfo = { rule: violatedRule, playerMove: moveResult };
+            gameState.game.undo(); // التراجع عن النقلة
+            gameState.board.position(gameState.game.fen()); // تحديث الرقعة بصرياً للحالة قبل النقلة
+            showMistakeModal();
+            return;
+        }
+
+        // إذا كانت النقلة صحيحة
+        gameState.board.position(gameState.game.fen());
+        handleCorrectMove();
+    }
+
+    function handleCorrectMove() {
+        updateStatus();
+        updatePgn();
+        window.setTimeout(getAIMove, 500);
+    }
+
+    // =================================================================================================
+    //                                  الجزء السادس: دوال الواجهة المساعدة (محدثة جزئياً)
+    // =================================================================================================
+    function updateStatus() { /* ... بدون تغيير ... */ let statusText = ''; const turn = gameState.game.turn() === 'w' ? 'الأبيض' : 'الأسود'; if (gameState.game.in_checkmate()) { statusText = `انتهت اللعبة، كش ملك! الفائز هو ${turn === 'الأبيض' ? 'الأسود' : 'الأبيض'}.`; } else if (gameState.game.in_draw()) { statusText = 'انتهت اللعبة، تعادل!'; } else { statusText = 'دور اللاعب ' + turn; if (gameState.game.in_check()) { statusText += ' (كش ملك!)'; } } uiElements.status.html(statusText); }
+    function updatePgn() { uiElements.pgn.html(gameState.game.pgn({ max_width: 5, newline_char: '<br>' })); uiElements.pgn.scrollTop(uiElements.pgn[0].scrollHeight); }
+    function updateEvaluationBar() { const max_eval = 1000; let score = gameState.lastEval.score; if(gameState.lastEval.mate !== null) { score = gameState.lastEval.mate > 0 ? max_eval : -max_eval; } let white_pct = 50 + (score / max_eval) * 50 * 2; white_pct = Math.max(0, Math.min(100, white_pct)); uiElements.whiteEvalBar.css('width', `${white_pct}%`); uiElements.blackEvalBar.css('width', `${100 - white_pct}%`); }
+    function updateStrategyInfo() { gameState.currentStrategyKey = uiElements.strategySelect.val(); if (gameState.currentStrategyKey === 'none') { uiElements.strategyRules.html('لم يتم اختيار استراتيجية بعد.'); gameState.playerSide = 'w'; gameState.board.orientation('white'); return; } const strategy = STRATEGIES[gameState.currentStrategyKey]; gameState.playerSide = strategy.side; gameState.board.orientation(strategy.side === 'w' ? 'white' : 'black'); if (strategy.side === 'b' && gameState.game.history().length === 0) { gameState.isPlayerTurn = false; getAIMove(); } else { gameState.isPlayerTurn = true; } let rulesHtml = `<h4>${strategy.name}</h4><p>${strategy.description}</p>`; for(const phase in strategy.phases) { rulesHtml += `<h5>قواعد ${phase === 'opening' ? 'الافتتاح' : 'وسط اللعبة'}:</h5><ul>`; strategy.phases[phase].forEach(rule => { rulesHtml += `<li><b>[أولوية ${rule.priority}]</b> ${rule.text}</li>`; }); rulesHtml += `</ul>`; } uiElements.strategyRules.html(rulesHtml); }
+    function resetGame() { gameState.game.reset(); removeHighlights(); gameState.selectedSquare = null; gameState.isPlayerTurn = true; updateStatus(); updatePgn(); updateStrategyInfo(); updateEvaluationBar(); gameState.board.position('start', false); }
+    
+    // دوال النافذة المنبثقة
+    function showMistakeModal() { const { rule } = gameState.incorrectMoveInfo; uiElements.modalTitle.html(`<span class="priority-${rule.priority}">خطأ من الأولوية ${rule.priority}</span>`); uiElements.modalRule.html(rule.text); uiElements.modalWhy.html(`<b>لماذا؟</b> ${rule.why}`); uiElements.modal.addClass('visible'); }
+    function closeMistakeModal() { uiElements.modal.removeClass('visible'); uiElements.boardEl.find('.square-55d63').removeClass('highlight-correct'); }
+    uiElements.showCorrectMoveBtn.on('click', function() { const { rule } = gameState.incorrectMoveInfo; if (rule.suggestion) { uiElements.boardEl.find('.square-55d63').removeClass('highlight-correct'); uiElements.boardEl.find('.square-' + rule.suggestion.from).addClass('highlight-correct'); uiElements.boardEl.find('.square-' + rule.suggestion.to).addClass('highlight-correct'); } closeMistakeModal(); });
+    uiElements.closeModalBtn.on('click', function() { gameState.board.position(gameState.game.fen()); handleCorrectMove(); closeMistakeModal(); });
+    
+    // =================================================================================================
+    //                                  الجزء السابع: ربط الأحداث والبدء (محدث)
+    // =================================================================================================
+    uiElements.resetButton.on('click', resetGame);
+    uiElements.strategySelect.on('change', function() { if (gameState.game.history().length > 0) { if (confirm('تغيير الاستراتيجية سيبدأ لعبة جديدة. هل أنت متأكد؟')) { resetGame(); } else { $(this).val(gameState.currentStrategyKey); } } else { updateStrategyInfo(); } });
+
+    // تهيئة رقعة الشطرنج بالإعدادات الجديدة
+    const boardConfig = {
+        // draggable: false, // *** مهم: ألغينا السحب والإفلات
+        position: 'start',
+        onSquareClick: onSquareClick, // *** مهم: أضفنا دالة التعامل مع الضغط
+        pieceTheme: 'img/{piece}.png',
+        appearSpeed: 200,
+        moveSpeed: 200,
+        snapbackSpeed: 50,
+        snapSpeed: 25,
+    };
+    gameState.board = Chessboard('myBoard', boardConfig);
+    
+    // أول تشغيل عند تحميل الصفحة
+    $(document).ready(function() {
+        resetGame();
+        $(window).resize(function() {
+            gameState.board.resize();
+        });
+    });
+
+    </script>
+</body>
+</html>
