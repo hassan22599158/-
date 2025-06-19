@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحليل جيم الشطرنج (نسخة محلية)</title>
+    
+    <!-- تم التعديل: استخدام ملف الـ CSS المحلي -->
+    <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+    
+    <style>
+        /* تم التعديل: تم استبدال Tailwind و Google Fonts بتصميم بسيط ومحلي */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 1100px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .main-content {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        .board-wrapper {
+            flex: 1;
+            min-width: 300px;
+            max-width: 600px; /* حد أقصى لحجم الرقعة */
+        }
+        #myBoard {
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        .analysis-wrapper {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        .analysis-box {
+            background-color: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            min-height: 150px;
+            flex-grow: 1;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .btn-custom {
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #555;
+            background-color: #333;
+            color: #e0e0e0;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-custom:hover {
+            background-color: #444;
+        }
+        .btn-custom:disabled {
+            background-color: #222;
+            color: #666;
+            cursor: not-allowed;
+        }
+        .pgn-box {
+            background-color: #1e1e1e;
+            border: 1px solid #444;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #ccc;
+            height: 100px;
+            overflow-y: auto;
+            direction: ltr; /* PGN is always LTR */
+            text-align: left;
+        }
+        .move-header { color: #58a6ff; }
+        .good-move { color: #56d364; }
+        .inaccuracy { color: #yellow; }
+        .mistake { color: #ff9966; }
+        .blunder { color: #ff7b72; }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="container">
+        <h1>تحليل ماتش الشطرنج بتاعك</h1>
+
+        <div class="main-content">
+            <div class="board-wrapper">
+                <div id="myBoard"></div>
+            </div>
+
+            <div class="analysis-wrapper">
+                <div id="analysisBox" class="analysis-box">
+                    <h2 id="moveHeader" class="move-header" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem;">أهلاً بيك!</h2>
+                    <p id="moveAnalysis">دوس على زر "التالي" عشان تبدأ تحليل الجيم خطوة بخطوة.</p>
+                </div>
+
+                <div class="controls">
+                    <button id="prevBtn" class="btn-custom">السابق</button>
+                    <button id="nextBtn" class="btn-custom">التالي</button>
+                    <button id="resetBtn" class="btn-custom">البداية</button>
+                </div>
+                 <div id="pgn" class="pgn-box"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- تم التعديل: استخدام ملفات الـ JS المحلية -->
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <script src="js/chessboard-1.0.0.min.js"></script>
+    <script src="js/chess.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            console.log("jQuery loaded and document is ready.");
+
+            var board = null;
+            var game = new Chess();
+            var pgn = '1. e4 Nf6 2. Nf3 d5 3. exd5 Nxd5 4. Bd3 Bg4 5. O-O Bxf3 6. gxf3 g6 7. f4 Bh6 8. Re1 Qd6 9. Bc4 Nxf4 10. Bb3 Ne6 11. Re3 Bxe3 12. fxe3 Nc5 13. Bc4 e6 14. Qf1 Nbd7 15. Nc3 Ne5 16. Bb3 b6 17. a3 f5 18. Kf2 O-O-O 19. Ke1 Ne4 20. a4 c5 21. Ke2 Ng3+ 22. Kf2 Nxf1 23. Kxf1 Nf3 24. d4 Nxh2+ 25. Ke2 cxd4 26. exd4 Qxd4 27. Be3 Qd6 28. a5 bxa5 29. Rxa5 Kb7 30. Rb5+ Kc6 31. Rc5+ Kb7 32. Rb5+ Ka6 33. Rc5 Ng4 34. Bg1 Rc8 35. Rb5 Ne5 36. Rb6+ Ka5 37. Rb5+ Ka6 38. Ra5+ Kxa5 39. Nd5 Qxd5 40. Bxd5 exd5 41. Bd4 Rcg8 42. Bxe5 h5 43. Kf3 g5 44. b3 Kb4 45. Bd6+ Kc3 46. Be5+ Kxc2 47. b4 f4 48. Bd4 Rh7 49. Bxa7 Rxa7 50. b5 d4 51. Ke2 Rb8 0-1';
+            
+            var history = [];
+            try {
+                game.load_pgn(pgn);
+                history = game.history({ verbose: true });
+                console.log("Game PGN loaded successfully. Total moves:", history.length);
+            } catch(e) {
+                console.error("Error loading PGN:", e);
+                alert("حدث خطأ أثناء تحميل الجيم. تأكد من صحة الـ PGN.");
+            }
+            
+            var currentMove = -1;
+
+            var analysis = [
+                // ... (مصفوفة التحليل لم تتغير، يمكنك نسخها من الردود السابقة)
+                 { move: "e4", player: "أبيض", type: "good-move", title: "نقلة ممتازة!", text: "بداية قوية جداً. بالبيدق ده أنت بتسيطر على أهم حتة في الرقعة (السنتر) وبتفتح طريق للفيل والوزير بتوعك." },
+            { move: "Nf6", player: "أسود", type: "info", title: "خصمك بيلعب دفاع أليخين", text: "ركز هنا، هو بيستفزك عشان تتقدم بالبيادق بتاعتك، وبعدين يرجع يهاجمها. هو بيراهن إنك هتمد بيادقك زيادة عن اللزوم وتضعف موقفك." },
+            { move: "Nf3", player: "أبيض", type: "good-move", title: "لعبت صح", text: "رد كويس جداً. بتنشر الحصان بتاعك في مكان طبيعي، بتحمي بيدق الـ e4، وبتجهز للتبييت عشان تأمن الملك." },
+            { move: "d5", player: "أسود", type: "info", title: "بيهاجم السنتر", text: "خصمك مش بيستنى. هو بيهاجم السنتر بتاعك علطول بالبيدق ده. هو عايز يجبرك تاكل البيدق بتاعه عشان حصانه ياكل ويبقى في مكان قوي." },
+            { move: "exd5", player: "أبيض", type: "good-move", title: "اختيار منطقي", text: "تمام، أنت كده بتفك الاشتباك اللي في النص. ده أكتر رد منتشر في الموقف ده." },
+            { move: "Nxd5", player: "أسود", type: "info", title: "حصانه في السنتر", text: "زي ما كان متوقع، هو أكل بالحصان وحطه في مربع d5. الحصان ده قوي جداً هنا، حاول تتخلص منه أو تحد من نشاطه." },
+            { move: "Bd3", player: "أبيض", type: "inaccuracy", title: "نقلة مش دقيقة", text: "الفيل هنا مكانه مش أحسن حاجة، لأنه ممكن يتهدد بسهولة، وكمان قافل السكة على بيدق الـ 'd' بتاعك اللي المفروض يطلع يسيطر على السنتر. كان الأحسن تلعب d4 الأول." },
+            { move: "Bg4", player: "أسود", type: "info", title: "بيربط حصانك", text: "خصمك بينشر فيله وبيربط حصانك اللي في f3 على الوزير. ده بيعملك إزعاج وبيمنع حصانك من الحركة بحرية." },
+            { move: "O-O", player: "أبيض", type: "good-move", title: "خطوة مهمة", text: "كويس جداً إنك بيتت. دي أهم حاجة دلوقتي، إنك تخبي الملك بتاعك في مكان آمن." },
+            { move: "Bxf3", player: "أسود", type: "info", title: "بيبوظلك البيادق!", text: "خد بالك! هو ضحى بالفيل بتاعه عشان يجبرك تاكل بالبيدق وتبوظ شكل البيادق اللي بتحمي الملك. ده قرار استراتيجي خطير منه." },
+            { move: "gxf3", player: "أبيض", type: "blunder", title: "غلطة كبيرة جداً (Blunder)!", text: "دي كانت أكبر غلطة في الجيم. لما أكلت ببيدق الـ 'g'، أنت كشفت الملك بتاعك خالص وبقى هدف سهل جداً للهجوم. كان لازم تاكل بالوزير (Qxf3) عشان تحافظ على الحصن اللي قدام الملك." },
+            { move: "g6", player: "أسود", type: "info", title: "بيجهز للهجوم", text: "خصمك بيستغل ضعفك فوراً. هو بيلعب g6 عشان يطلع فيله من مربع g7، وده هيعمل ضغط رهيب على ملكك المكشوف." },
+            { move: "f4", player: "أبيض", type: "mistake", title: "غلطة (Mistake)", text: "دي بتزود الطين بلة. بتضعف موقف الملك أكتر وبتقدم بيدق كان ممكن يدافع. أنت كده بتفتح خطوط لخصمك يهاجمك منها." },
+            { move: "Bh6", player: "أسود", type: "info", title: "ضغط على نقاط الضعف", text: "فيله بقى في مكان خطير جداً، بيضغط على بيادقك الضعيفة وبيسيطر على أقطار مهمة حوالين ملكك." },
+            { move: "Re1", player: "أبيض", type: "inaccuracy", title: "محاولة مش كافية", text: "نقلة القلعة دي مش وحشة، بس مبتعالجش المشكلة الأساسية وهي ضعف الملك. كان لازم تركز على الدفاع." },
+            { move: "Qd6", player: "أسود", type: "info", title: "الوزير دخل اللعب", text: "خصمك بيجيب الوزير بتاعه عشان يشارك في الهجوم. هو باصص على جناح الملك الضعيف بتاعك." },
+            { move: "Bc4", player: "أبيض", type: "inaccuracy", title: "نقلة فيل مش مؤثرة", text: "بتحرك الفيل تاني بدل ما تنشر قطعة جديدة زي الحصان. الفيل في c4 مش بيعمل أي تهديد حقيقي حالياً." },
+            { move: "Nxf4", player: "أسود", type: "info", title: "كسب بيدق وبيعمل شوكة", text: "خصمك استغل الموقف وكسب بيدق ببلاش، وعامل شوكة (fork) بيهدد بيها الوزير بتاعك والقلعة في نفس الوقت." },
+            { move: "Bb3", player: "أبيض", type: "inaccuracy", title: "حركة اضطرارية", text: "اضطريت ترجع بالفيل عشان تحل الشوكة، وده بيخليك تخسر وقت أكتر." },
+            { move: "Ne6", player: "أسود", type: "info", title: "حصان قوي", text: "رجع بالحصان في مكان دفاعي وهجومي ممتاز، بيسيطر على مربعات مهمة." },
+            { move: "Re3", player: "أبيض", type: "mistake", title: "غلطة", text: "بتعرض تبديل وأنت موقفك أضعف. القاعدة بتقول: لو خسران، تجنب التكسير لأنه بيقرب خصمك من الفوز." },
+            { move: "Bxe3", player: "أسود", type: "info", title: "بيقبل التكسير", text: "طبعاً هيوافق على التكسير لأنه في مصلحته. كده بيقلل القطع الدفاعية بتاعتك." },
+            { move: "fxe3", player: "أبيض", type: "mistake", title: "غلطة تانية", text: "بكده أنت فتحت عمود الـ 'f' لقلعة خصمك، وده هيزود الضغط على ملكك المكشوف أكتر وأكتر. كان المفروض تاكل ببيدق الـ 'd'." },
+            { move: "Nc5", player: "أسود", type: "info", title: "حصان جديد في الهجوم", text: "حصانه التاني دخل اللعبة وبيضغط على فيلك." },
+            { move: "Bc4", player: "أبيض", type: "inaccuracy", title: "تكرار للنقلة", text: "رجعت الفيل تاني لنفس المكان، وده ضياع وقت." },
+            { move: "e6", player: "أسود", type: "info", title: "بيقوي مركزه", text: "بيحمي بيادقه وبيفتح مجال أكتر لقطعه." },
+            { move: "Qf1", player: "أبيض", type: "inaccuracy", title: "محاولة", text: "بتحاول تعمل هجوم مضاد، بس موقفك صعب." },
+            { move: "Nbd7", player: "أسود", type: "info", title: "انتشار كامل", text: "خصمك خلص انتشار كل قطعه الصغيرة، وموقفه مثالي." },
+            { move: "Nc3", player: "أبيض", type: "good-move", title: "نقلة كويسة أخيراً", text: "نشرت الحصان بتاعك، دي خطوة كويسة كان المفروض تتعمل من زمان." },
+            { move: "Ne5", player: "أسود", type: "info", title: "حصان في قلب الرقعة", text: "حصانه بقى في مربع خطير جداً في نص الرقعة." },
+            { move: "Bb3", player: "أبيض", type: "inaccuracy", title: "تراجع", text: "تراجعت بالفيل، وده بيوضح إنك في موقف دفاعي." },
+            { move: "b6", player: "أسود", type: "info", title: "بيوسع لنفسه", text: "بيمنع أي هجوم من الحصان وبيجهز لتوسعات على جناح الوزير." },
+            { move: "a3", player: "أبيض", type: "inaccuracy", title: "نقلة بطيئة", text: "نقلة بطيئة مش بتساعد في حل مشاكلك الأساسية." },
+            { move: "f5", player: "أسود", type: "info", title: "بيفتح اللعب أكتر", text: "بيهاجم ببيادقه عشان يفتح خطوط أكتر على ملكك." },
+            { move: "Kf2", player: "أبيض", type: "blunder", title: "غلطة قاتلة!", text: "دي كانت النقلة اللي قضت على الجيم. حركت الملك بتاعك من مكان وحش لمكان أسوأ. بقى في نص الرقعة هدف سهل لكل قطع خصمك." },
+            { move: "O-O-O", player: "أسود", type: "info", title: "بيجيب القلعة للهجوم", text: "بيت تبييت طويل عشان يجيب القلعة التانية تشارك في الهجوم على ملكك اللي في الشارع." },
+            { move: "Ke1", player: "أبيض", type: "inaccuracy", title: "محاولة يائسة للهروب", text: "بتحاول ترجع بالملك، بس خلاص الوقت فات." },
+            { move: "Ne4", player: "أسود", type: "info", title: "ضغط متواصل", text: "حصانه في e4 خانقك تماماً." },
+            { move: "a4", player: "أبيض", type: "inaccuracy", title: "نقلة على الهامش", text: "بتحرك بيدق على طرف الرقعة، والمشكلة كلها في النص وحوالين ملكك." },
+            { move: "c5", player: "أسود", type: "info", title: "بيسيطر على كل حاجة", text: "بيسيطر على مربعات أكتر وبيحد من حركة قطعك." },
+            { move: "Ke2", player: "أبيض", type: "inaccuracy", title: "الملك تائه", text: "الملك لسه في خطر ومش لاقي مكان آمن." },
+            { move: "Ng3+", player: "أسود", type: "info", title: "كش وهجوم مزدوج!", text: "نقلة تكتيكية قوية جداً. كش بالحصان، وفي نفس الوقت الحصان التاني بيهاجم وزيرك (هجوم مكشوف)." },
+            { move: "Kf2", player: "أبيض", "type": "inaccuracy", "title": "حركة إجبارية", "text": "أجبرت على الحركة دي." },
+            { move: "Nxf1", player: "أسود", type: "info", title: "خسرت الوزير", text: "كده أنت خسرت وزيرك مقابل حصان. من النقطة دي، الجيم خسران عملياً. الباقي مجرد مسألة وقت." },
+            { move: "Kxf1", player: "أبيض", type: "", title: "نهاية اللعبة", text: "موقف صعب جداً، شبه مستحيل تتعادل فيه." },
+            { move: "Nf3", player: "أسود", type: "", title: "", text: "حصانه نشيط جداً ومسببلك مشاكل." },
+            { move: "d4", player: "أبيض", type: "", title: "", text: "بتحاول تفتح اللعب، بس ده في صالح خصمك." },
+            { move: "Nxh2+", player: "أسود", type: "", title: "", text: "كسب بيدق تاني ولسه بيهاجم." },
+            { move: "Ke2", player: "أبيض", type: "", title: "", text: "الملك لسه بيجري." },
+            { move: "cxd4", player: "أسود", type: "", title: "", text: "بيفتح عمود الـ 'c' لقلعته." },
+            { move: "exd4", player: "أبيض", type: "", title: "", text: "" },
+            { move: "Qxd4", player: "أسود", type: "", title: "", text: "وزيره بقى في مكان مرعب." },
+            { move: "Be3", player: "أبيض", type: "", title: "", text: "بتنشر الفيل عشان يدافع." },
+            { move: "Qd6", player: "أسود", type: "", title: "", text: "بيتراجع بالوزير عشان يجهز لهجمة جديدة." },
+            { move: "a5", player: "أبيض", type: "", title: "", text: "محاولة لخلق لعب مضاد على جناح الوزير." },
+            { move: "bxa5", player: "أسود", type: "", title: "", text: "فتح عمود تاني لقلعته." },
+            { move: "Rxa5", player: "أبيض", type: "", title: "", text: "" },
+            { move: "Kb7", player: "أسود", type: "", title: "", text: "بيبعد بالملك عن أي كشات محتملة." },
+            { move: "Rb5+", player: "أبيض", type: "", title: "", text: "كش." },
+            { move: "Kc6", player: "أسود", type: "", title: "", text: "" },
+            { move: "Rc5+", player: "أبيض", type: "", title: "", text: "كش تاني." },
+            { move: "Kb7", player: "أسود", type: "", title: "", text: "" },
+            { move: "Rb5+", player: "أبيض", type: "", title: "", text: "بتكرر الكشات، بس مفيش كش مات." },
+            { move: "Ka6", player: "أسود", type: "", title: "", text: "بيهرب بالملك." },
+            { move: "Rc5", player: "أبيض", type: "", title: "", text: "" },
+            { move: "Ng4", player: "أسود", type: "", title: "", text: "الحصان بيرجع يهاجم تاني." },
+            { move: "Bg1", player: "أبيض", type: "", title: "", text: "بتدافع عن بيدق الـ h2." },
+            { move: "Rc8", player: "أسود", type: "", title: "", text: "بيسيطر على العمود المفتوح." },
+            { move: "Rb5", player: "أبيض", type: "", title: "", text: "" },
+            { move: "Ne5", player: "أسود", type: "", title: "", text: "حصانه رجع تاني للمكان القوي." },
+            { move: "Rb6+", player: "أبيض", type: "", title: "", text: "كش يائس." },
+            { move: "Ka5", player: "أسود", type: "", title: "", text: "الملك هربان تماماً." },
+            { move: "Rb5+", player: "أبيض", type: "", title: "", text: "" },
+            { move: "Ka6", player: "أسود", type: "", title: "", text: "" },
+            { move: "Ra5+", player: "أبيض", type: "", title: "", text: "بتضحي بالقلعة عشان تتجنب الكش مات." },
+            { move: "Kxa5", player: "أسود", type: "", title: "", text: "" },
+            { move: "Nd5", player: "أبيض", type: "", title: "", text: "" },
+            { move: "Qxd5", player: "أسود", type: "", title: "", text: "" },
+            { move: "Bxd5", player: "أبيض", type: "", title: "", text: "" },
+            { move: "exd5", player: "أسود", type: "", title: "", text: "" },
+            { move: "Bd4", player: "أبيض", type: "", title: "", text: "" },
+            { move: "Rcg8", player: "أسود", type: "", title: "", text: "بيجهز عشان يزق بيادق جناح الملك." },
+            { move: "Bxe5", player: "أبيض", type: "", title: "", text: "" },
+            { move: "h5", player: "أسود", type: "", title: "", text: "بيدق بيجري." },
+            { move: "Kf3", player: "أبيض", type: "", title: "", text: "" },
+            { move: "g5", player: "أسود", type: "", title: "", text: "بيدق تاني بيجري." },
+            { move: "b3", player: "أبيض", type: "", title: "", text: "" },
+            { move: "Kb4", player: "أسود", type: "", title: "", text: "الملك بيشارك في الهجوم." },
+            { move: "Bd6+", player: "أبيض", type: "", title: "", text: "" },
+            { move: "Kc3", player: "أسود", type: "", title: "", text: "ملك قوي جداً." },
+            { move: "Be5+", player: "أبيض", type: "", title: "", text: "" },
+            { move: "Kxc2", player: "أسود", type: "", title: "", text: "" },
+            { move: "b4", player: "أبيض", type: "", title: "", text: "" },
+            { move: "f4", player: "أسود", type: "", title: "", text: "البيادق هتترقى." },
+            { move: "Bd4", player: "أبيض", type: "", title: "", text: "" },
+            { move: "Rh7", player: "أسود", type: "", title: "", text: "" },
+            { move: "Bxa7", player: "أبيض", type: "", title: "", text: "" },
+            { move: "Rxa7", player: "أسود", type: "", title: "", text: "" },
+            { move: "b5", player: "أبيض", type: "", title: "", text: "" },
+            { move: "d4", player: "أسود", type: "", title: "", text: "خلاص، الجيم انتهى. استسلامك كان في محله." },
+            { move: "Ke2", player: "أبيض", type: "", title: "", text: "" },
+            { move: "Rb8", player: "أسود", type: "", title: "", text: "استسلام." },
+            ];
+
+            function updateUI() {
+                var pgnEl = $('#pgn');
+                var analysisBox = $('#analysisBox');
+                var moveHeader = $('#moveHeader');
+                var moveAnalysis = $('#moveAnalysis');
+
+                analysisBox.removeClass('good-move inaccuracy mistake blunder');
+
+                let pgnString = '';
+                for (let i = 0; i <= currentMove; i++) {
+                    if (history[i]) {
+                        if (i % 2 === 0) {
+                            pgnString += (Math.floor(i / 2) + 1) + '. ';
+                        }
+                        pgnString += history[i].san + ' ';
+                    }
+                }
+                pgnEl.text(pgnString.trim());
+
+                if (currentMove === -1) {
+                    board.position('start');
+                    moveHeader.text('أهلاً بيك!');
+                    moveAnalysis.text('دوس على زر "التالي" عشان تبدأ تحليل الجيم خطوة بخطوة.');
+                    pgnEl.text("الجيم هيبدأ اهو...");
+                } else {
+                    if (history[currentMove] && analysis[currentMove]) {
+                        var move = history[currentMove];
+                        var moveInfo = analysis[currentMove];
+                        board.position(move.after);
+                        moveHeader.text(`النقلة ${Math.floor(currentMove / 2) + 1}: ${move.san} (${moveInfo.player})`);
+                        moveAnalysis.html(`<strong class="${moveInfo.type}" style="font-size: 1.2em;">${moveInfo.title}</strong><br>${moveInfo.text}`);
+                        analysisBox.addClass(moveInfo.type);
+                    }
+                }
+                $('#prevBtn').prop('disabled', currentMove < 0);
+                $('#nextBtn').prop('disabled', currentMove >= history.length - 1);
+            }
+
+            $('#nextBtn').on('click', function () {
+                console.log("Next button clicked.");
+                if (currentMove < history.length - 1) {
+                    currentMove++;
+                    updateUI();
+                }
+            });
+
+            $('#prevBtn').on('click', function () {
+                console.log("Prev button clicked.");
+                if (currentMove >= 0) {
+                    currentMove--;
+                    updateUI();
+                }
+            });
+            
+            $('#resetBtn').on('click', function() {
+                console.log("Reset button clicked.");
+                currentMove = -1;
+                updateUI();
+            });
+
+            var config = {
+                draggable: false,
+                position: 'start',
+                pieceTheme: 'img/{piece}.png'
+            };
+            try {
+                board = Chessboard('myBoard', config);
+                console.log("Chessboard initialized successfully.");
+            } catch(e) {
+                console.error("Error initializing Chessboard:", e);
+                alert("حدث خطأ أثناء عرض رقعة الشطرنج.");
+            }
+            
+            $(window).resize(function() {
+                if(board) {
+                    board.resize();
+                }
+            });
+            updateUI();
+        });
+    </script>
+</body>
+</html>
