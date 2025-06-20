@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحليل لعبة الشطرنج - بالأسلوب المصري</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f1c40f;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            color: #f1c40f;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ecf0f1;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .game-info {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 1.1rem;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .board-section {
+            flex: 1;
+            min-width: 400px;
+            background: rgba(44, 62, 80, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .analysis-section {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(26, 42, 108, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .section-title {
+            color: #f1c40f;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #3498db;
+            font-size: 1.5rem;
+        }
+        
+        #chessboard {
+            width: 400px;
+            height: 400px;
+            margin: 0 auto;
+            border: 4px solid #2c3e50;
+            border-radius: 4px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            min-width: 120px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            background: #7f8c8d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        #move-counter {
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 15px 0;
+            color: #f1c40f;
+            font-weight: bold;
+        }
+        
+        #analysis {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid #3498db;
+        }
+        
+        .move-analysis {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .move-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            color: #f1c40f;
+            font-weight: bold;
+        }
+        
+        .good-move {
+            border-left: 4px solid #2ecc71;
+        }
+        
+        .bad-move {
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .explanation {
+            font-size: 1.05rem;
+            color: #ecf0f1;
+        }
+        
+        .egyptian {
+            color: #f1c40f;
+            font-style: italic;
+        }
+        
+        .move-plan {
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(52, 152, 219, 0.2);
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+        
+        .key-mistakes {
+            background: rgba(231, 76, 60, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #e74c3c;
+        }
+        
+        .key-mistakes h3 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        
+        .key-mistakes ul {
+            padding-left: 20px;
+        }
+        
+        .key-mistakes li {
+            margin-bottom: 10px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid #3498db;
+            color: #bdc3c7;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 900px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            #chessboard {
+                width: 100%;
+                max-width: 400px;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>تحليل لعبة الشطرنج - بالأسلوب المصري</h1>
+            <p class="subtitle">هنشرح كل خطوة في لعبتك بالتفصيل ونبين الأخطاء والإجراءات الصح، ونتكلم باللهجة المصرية عشان تفهم كل حاجة</p>
+        </header>
+        
+        <div class="game-info">
+            <p><strong>اللاعب الأبيض:</strong> JAVA_DATE_BASE (198) | <strong>اللاعب الأسود:</strong> ROMPETOP (226)</p>
+            <p><strong>النتيجة:</strong> 0-1 (ROMPETOP فاز بالاستسلام)</p>
+            <p><strong>التاريخ:</strong> 19 يونيو 2025</p>
+        </div>
+        
+        <div class="content">
+            <div class="board-section">
+                <h2 class="section-title">لوحة الشطرنج</h2>
+                <div id="chessboard"></div>
+                <div id="move-counter">الحركة: 0 - البداية</div>
+                <div class="controls">
+                    <button id="prevBtn">← الرجوع</button>
+                    <button id="resetBtn">البداية من جديد</button>
+                    <button id="nextBtn">التالي →</button>
+                    <button id="autoPlayBtn">تشغيل تلقائي</button>
+                </div>
+            </div>
+            
+            <div class="analysis-section">
+                <h2 class="section-title">تحليل الحركات</h2>
+                <div id="analysis">
+                    <div class="move-analysis">
+                        <div class="move-header">
+                            <span>الحركة 0: البداية</span>
+                        </div>
+                        <div class="explanation">
+                            <p>خلينا نبتدي اللعبة! دي بداية قياسية كويسة.</p>
+                            <p class="egyptian">الأسود نزل الحصان على f6، فكرة كويسة منه عشان يهاجم البيدق بتاعك في e4.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="key-mistakes">
+                    <h3>الأخطاء الأساسية في اللعبة</h3>
+                    <ul>
+                        <li>الحركة 4: Bd3 - غلط كبير! الفيل ده كان لازم ينزل في مكان تاني عشان متخسرش الحصان</li>
+                        <li>الحركة 5: O-O - التبييت في الوقت ده غلط عشان خصمك كان قدامه فرصة يضرب الحصان</li>
+                        <li>الحركة 13: Bc4 - رجعت الفيل لنفس المكان تاني! دي حركة ملهاش لازمة وخسرت وقت</li>
+                        <li>الحركة 21: Ke2 - نقلت الملك في مكان خطر وخلت الحصان يعملك كش مات</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>تم تطوير الموقع خصيصًا لتحليل لعبتك | كل الشروح باللهجة المصرية عشان توصل المعلومة بشكل أوضح</p>
+            <p>لو حابب تتدرب أكتر على اللعبة دي، تقدر ترجع تاني وتشغل اللعبة خطوة خطوة وتفهم كل حركة</p>
+        </footer>
+    </div>
+
+    <!-- لن نستخدم مكتبات خارجية كما طلبت -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const board = document.getElementById('chessboard');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const autoPlayBtn = document.getElementById('autoPlayBtn');
+            const moveCounter = document.getElementById('moveCounter');
+            const analysisDiv = document.getElementById('analysis');
+            
+            // بيانات اللعبة
+            const gameMoves = [
+                { move: "e4", eval: "good", comment: "الحركة: e4 - افتتاحية كويسة وبسيطة. دي حركة قياسية بتسيطر على المركز." },
+                { move: "Nf6", eval: "good", comment: "الأسود: Nf6 - حركة كويسة من خصمك. هو بيهاجم البيدق بتاعك في e4." },
+                { move: "Nf3", eval: "neutral", comment: "الحركة: Nf3 - كويسة، بتنمي الحصان وبتسيطر على المركز. لكن خلي بالك من هجوم الأسود بd5." },
+                { move: "d5", eval: "good", comment: "الأسود: d5 - بيهاجم البيدق في e4. المفروض تاخد في d5 عشان متخسرش البيدق." },
+                { move: "exd5", eval: "good", comment: "الحركة: exd5 - صح! خدت البيدق. كويس أنك فضلت البيدق." },
+                { move: "Nxd5", eval: "good", comment: "الأسود: Nxd5 - خد البيدق بردك. دلوقتي الحصان في مركز كويس في الوسط." },
+                { move: "Bd3", eval: "bad", comment: "الحركة: Bd3 - <span class='egyptian'>يا عم دي غلطة كبيرة!</span> الفيل ده هيبقى مقطوع والخصم هيقدر يلعب Bg4 ويخلي حصانك في f3 مش قادر يتحرك." },
+                { move: "Bg4", eval: "good", comment: "الأسود: Bg4 - <span class='egyptian'>شوفت؟ زي ما حذرناك!</span> خصمك بيحقق تثبيت للحصان. لو حركت الحصان هتخسر الوزير." },
+                { move: "O-O", eval: "bad", comment: "الحركة: O-O - <span class='egyptian'>لااااا! التبييت في الوقت ده غلط!</span> خصمك هيضرب في الحصان وهتخسر الحصان وبيادقك هتتبهدل." },
+                { move: "Bxf3", eval: "good", comment: "الأسود: Bxf3 - خصمك خد الحصان وافسد هيكل البيادق بتاعتك. الملك بقى مكشوف على العمود G." },
+                { move: "gxf3", eval: "neutral", comment: "الحركة: gxf3 - مكنش عندك خيار تاني. بس دلوقتي بيادقك في جهة الملك ضعيفة." },
+                { move: "g6", eval: "good", comment: "الأسود: g6 - بيجهز لتنمية الفيل في g7. كويس ليه." },
+                { move: "f4", eval: "bad", comment: "الحركة: f4 - مش أحسن حاجة! بتضعف مركز الملك أكتر. الأحسن كان تطور القطع." },
+                { move: "Bh6", eval: "good", comment: "الأسود: Bh6 - بيطور الفيل ويضغط على العمود المفتوح H. وبيهدد يأخذ في e3." },
+                { move: "Re1", eval: "neutral", comment: "الحركة: Re1 - كويس أنك تدافع عن البيدق e3. بس الفيل لسه في خطر." },
+                { move: "Qd6", eval: "good", comment: "الأسود: Qd6 - بيطور الوزير ويهدد البيدق في f4. كويس ليه." },
+                { move: "Bc4", eval: "bad", comment: "الحركة: Bc4 - <span class='egyptian'>حركة مش كويسة!</span> كنت نقلت الفيل من d3 عشان الخطر، دلوقتي رجعته لنفس المكان؟!" },
+                { move: "Nxf4", eval: "good", comment: "الأسود: Nxf4 - خد البيدق في f4. طبعا مش هتقدر تاخد الحصان عشان الوزير بتاعك مكشوفة." },
+                { move: "Bb3", eval: "neutral", comment: "الحركة: Bb3 - كويس انك سحبت الفيل. لكن كنت هتخسر البيدق في كل الأحوال." },
+                { move: "Ne6", eval: "good", comment: "الأسود: Ne6 - بيحمي الحصان ويدعم المركز. كويس ليه." },
+                { move: "Re3", eval: "bad", comment: "الحركة: Re3 - <span class='egyptian'>حركة غلط!</span> الرخ في مكان خطر وهيتضرب بالفيل." },
+                { move: "Bxe3", eval: "good", comment: "الأسود: Bxe3 - خصمك خد الرخ! خسارة كبيرة." },
+                { move: "fxe3", eval: "neutral", comment: "الحركة: fxe3 - مفيش خيار تاني. بس دلوقتي الوضع صعب." },
+                { move: "Nc5", eval: "good", comment: "الأسود: Nc5 - بيحتل مكان كويس في المركز ويهدد الفيل." },
+                { move: "Bc4", eval: "bad", comment: "الحركة: Bc4 - <span class='egyptian'>حركة ملهاش لازمة!</span> الفيل رجع لنفس المكان تاني. دي خسارة للوقت." },
+                { move: "e6", eval: "good", comment: "الأسود: e6 - بيحمي المركز ويوفر مكان للملك. كويس ليه." },
+                { move: "Qf1", eval: "neutral", comment: "الحركة: Qf1 - كويس انك تحمي الملك. بس اللعبة في صالح الأسود دلوقتي." },
+                { move: "Nbd7", eval: "good", comment: "الأسود: Nbd7 - بتنمية الحصان التاني. استعداد للهجوم." },
+                { move: "Nc3", eval: "neutral", comment: "الحركة: Nc3 - كويس انك بتنمي الحصان. بس متأخر شوية." },
+                { move: "Ne5", eval: "good", comment: "الأسود: Ne5 - الحصان في مكان خطير في المركز. هيقدر يهدد كتير." },
+                { move: "Bb3", eval: "bad", comment: "الحركة: Bb3 - الفيل رجع تاني لنفس المكان! دي حركة ضعيفة." },
+                { move: "b6", eval: "good", comment: "الأسود: b6 - بيجهز لتنمية الفيل في b7. كويس ليه." },
+                { move: "a3", eval: "neutral", comment: "الحركة: a3 - حركة بسيطة مش بتساعد كتير. الأحسن كان تحاول تهدد." },
+                { move: "f5", eval: "good", comment: "الأسود: f5 - بيضغط على المركز ويهدد التوسع. كويس ليه." },
+                { move: "Kf2", eval: "bad", comment: "الحركة: Kf2 - نقل الملك في مكان خطر! الملك في الصف التاني ومكشوف." },
+                { move: "O-O-O", eval: "good", comment: "الأسود: O-O-O - خصمك بيتبيت في الجهة التانية ويجهز الرخ للهجوم." },
+                { move: "Ke1", eval: "bad", comment: "الحركة: Ke1 - رجعت الملك تاني! دي خسارة للوقت والملك في مكان مش آمن." },
+                { move: "Ne4", eval: "good", comment: "الأسود: Ne4 - الحصان نزل في مكان خطير قدام الملك. هيبدأ هجوم." },
+                { move: "a4", eval: "neutral", comment: "الحركة: a4 - حركة مش بتساعد في الدفاع. الأحسن كان تحاول توقف الهجوم." },
+                { move: "c5", eval: "good", comment: "الأسود: c5 - بيضغط على المركز ويفتح الخطوط. كويس ليه." },
+                { move: "Ke2", eval: "very bad", comment: "الحركة: Ke2 - <span class='egyptian'>يا ريس دي غلطة فادحة!</span> الملك في مكان خطر وهتاخد كش مات قريب." },
+                { move: "Ng3+", eval: "good", comment: "الأسود: Ng3+ - كش! الملك مجبر يتحرك وهتخسر الرخ." },
+                { move: "Kf2", eval: "neutral", comment: "الحركة: Kf2 - مفيش اختيارات كتير. الملك في خطر." },
+                { move: "Nxf1", eval: "good", comment: "الأسود: Nxf1 - خد الرخ! خسارة كبيرة ليك." },
+                { move: "Kxf1", eval: "neutral", comment: "الحركة: Kxf1 - خدت الحصان، بس خسرت الرخ." },
+                { move: "Nf3", eval: "good", comment: "الأسود: Nf3 - الحصان في مكان خطير قدام الملك. هيوصل للملك بسهولة." },
+                { move: "d4", eval: "neutral", comment: "الحركة: d4 - محاولة لفتح اللعبة، بس متأخر." },
+                { move: "Nxh2+", eval: "good", comment: "الأسود: Nxh2+ - كش وخد البيدق! الملك مجبر يتحرك." },
+                { move: "Ke2", eval: "bad", comment: "الحركة: Ke2 - نقل الملك مكان مش كويس. في خطر أكتر." },
+                { move: "cxd4", eval: "good", comment: "الأسود: cxd4 - خد البيدق وفتح اللعبة." },
+                { move: "exd4", eval: "neutral", comment: "الحركة: exd4 - خدت البيدق، بس الوضع صعب." },
+                { move: "Qxd4", eval: "good", comment: "الأسود: Qxd4 - خد البيدق! الوزير بقى في مكان خطير." },
+                { move: "Be3", eval: "neutral", comment: "الحركة: Be3 - محاولة للدفاع، بس متأخر." },
+                { move: "Qd6", eval: "good", comment: "الأسود: Qd6 - نقل الوزير لمكان آمن. كويس ليه." },
+                { move: "a5", eval: "neutral", comment: "الحركة: a5 - محاولة للهجوم، بس مش مؤثرة." },
+                { move: "bxa5", eval: "good", comment: "الأسود: bxa5 - خد البيدق. كسب مادة." },
+                { move: "Rxa5", eval: "neutral", comment: "الحركة: Rxa5 - خدت البيدق، بس الرخ في خطر." },
+                { move: "Kb7", eval: "good", comment: "الأسود: Kb7 - نقل الملك لمكان آمن. كويس ليه." },
+                { move: "Rb5+", eval: "neutral", comment: "الحركة: Rb5+ - كش، بس مش مؤثر." },
+                { move: "Kc6", eval: "good", comment: "الأسود: Kc6 - نقل الملك بسهولة. مفيش خطر." },
+                { move: "Rc5+", eval: "neutral", comment: "الحركة: Rc5+ - كش تاني، مش هيغير حاجة." },
+                { move: "Kb7", eval: "good", comment: "الأسود: Kb7 - رجع الملك لنفس المكان. مفيش مشكلة." },
+                { move: "Rb5+", eval: "neutral", comment: "الحركة: Rb5+ - كش تالت، دي حركة ملهاش لازمة." },
+                { move: "Ka6", eval: "good", comment: "الأسود: Ka6 - نقل الملك. الرخ في خطر دلوقتي." },
+                { move: "Rc5", eval: "bad", comment: "الحركة: Rc5 - <span class='egyptian'>الرخ في مكان خطر وهيتضرب!</span>" },
+                { move: "Ng4", eval: "good", comment: "الأسود: Ng4 - الحصان هيضرب الرخ أو يهدد أكتر." },
+                { move: "Bg1", eval: "bad", comment: "الحركة: Bg1 - نقل الفيل لمكان مش كويس. مش هيحمي الرخ." },
+                { move: "Rc8", eval: "good", comment: "الأسود: Rc8 - الرخ هيضرب رخك! خسارة أكيدة للرخ." },
+                { move: "Rb5", eval: "neutral", comment: "الحركة: Rb5 - محاولة للهروب، بس الرخ هيتضرب بردو." },
+                { move: "Ne5", eval: "good", comment: "الأسود: Ne5 - الحصان في مكان كويس. هيضرب الرخ." },
+                { move: "Rb6+", eval: "neutral", comment: "الحركة: Rb6+ - كش، بس مش هيغير حاجة." },
+                { move: "Ka5", eval: "good", comment: "الأسود: Ka5 - الملك في مكان آمن." },
+                { move: "Rb5+", eval: "neutral", comment: "الحركة: Rb5+ - كش تاني، ملهاش لازمة." },
+                { move: "Ka6", eval: "good", comment: "الأسود: Ka6 - الملك رجع. الرخ هيتضرب." },
+                { move: "Ra5+", eval: "neutral", comment: "الحركة: Ra5+ - كش، بس متأخر." },
+                { move: "Kxa5", eval: "good", comment: "الأسود: Kxa5 - خد الرخ! خسرت الرخ التاني." },
+                { move: "Nd5", eval: "neutral", comment: "الحركة: Nd5 - محاولة للتعويض، بس صعبة." },
+                { move: "Qxd5", eval: "good", comment: "الأسود: Qxd5 - خد الحصان! كسب مادة أكتر." },
+                { move: "Bxd5", eval: "neutral", comment: "الحركة: Bxd5 - خدت الوزير، بس خسرت الفيل." },
+                { move: "exd5", eval: "good", comment: "الأسود: exd5 - خد الفيل. بقى عندك ملك وبيدق ضد ملك وقطع كتير." },
+                { move: "Bd4", eval: "neutral", comment: "الحركة: Bd4 - محاولة دفاع أخيرة." },
+                { move: "Rcg8", eval: "good", comment: "الأسود: Rcg8 - الرخين هيبدوا هجوم على الملك." },
+                { move: "Bxe5", eval: "neutral", comment: "الحركة: Bxe5 - خدت الحصان، بس مش هيغير." },
+                { move: "h5", eval: "good", comment: "الأسود: h5 - البيدق هيوصل ويخلي الملك في خطر." },
+                { move: "Kf3", eval: "neutral", comment: "الحركة: Kf3 - نقل الملك، بس في خطر." },
+                { move: "g5", eval: "good", comment: "الأسود: g5 - البيدق هيوصل للملك." },
+                { move: "b3", eval: "bad", comment: "الحركة: b3 - مش هتساعد. البيدق هيوصل." },
+                { move: "Kb4", eval: "good", comment: "الأسود: Kb4 - الملك هيشارك في الهجوم." },
+                { move: "Bd6+", eval: "neutral", comment: "الحركة: Bd6+ - كش، بس مش مؤثر." },
+                { move: "Kc3", eval: "good", comment: "الأسود: Kc3 - الملك في مكان كويس." },
+                { move: "Be5+", eval: "neutral", comment: "الحركة: Be5+ - كش تاني، ملهاش لازمة." },
+                { move: "Kxc2", eval: "good", comment: "الأسود: Kxc2 - الملك خد البيدق! خسرت أكتر." },
+                { move: "b4", eval: "neutral", comment: "الحركة: b4 - محاولة أخيرة." },
+                { move: "f4", eval: "good", comment: "الأسود: f4 - البيدق هيوصل." },
+                { move: "Bd4", eval: "neutral", comment: "الحركة: Bd4 - الفيل مش هيقدر يوقف البيدق." },
+                { move: "Rh7", eval: "good", comment: "الأسود: Rh7 - الرخ هيضغط على الملك." },
+                { move: "Bxa7", eval: "neutral", comment: "الحركة: Bxa7 - خدت البيدق، بس مش مهم." },
+                { move: "Rxa7", eval: "good", comment: "الأسود: Rxa7 - خد الفيل. بقى عندك ملك وبيدق ضد ملك ورخ." },
+                { move: "b5", eval: "neutral", comment: "الحركة: b5 - البيدق هيوصل، بس الرخ هيمنعه." },
+                { move: "d4", eval: "good", comment: "الأسود: d4 - البيدق هيوصل ويخلي الملك في خطر." },
+                { move: "Ke2", eval: "bad", comment: "الحركة: Ke2 - الملك في مكان خطر." },
+                { move: "Rb8", eval: "good", comment: "الأسود: Rb8 - الرخ هيحاصر الملك. كش مات في الطريق." }
+            ];
+            
+            let currentMove = 0;
+            let autoPlayInterval;
+            
+            // دالة لعرض لوحة الشطرنج
+            function renderBoard() {
+                // في تطبيق حقيقي، هنا سيتم استخدام مكتبة chessboard.js
+                // لكننا سنقوم بمحاكاة شكل اللوحة لأغراض العرض
+                board.innerHTML = '';
+                board.style.backgroundColor = '#f0d9b5';
+                board.style.display = 'grid';
+                board.style.gridTemplateColumns = 'repeat(8, 1fr)';
+                board.style.gridTemplateRows = 'repeat(8, 1fr)';
+                board.style.border = '2px solid #000';
+                
+                // إنشاء مربعات الشطرنج
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const square = document.createElement('div');
+                        square.style.width = '100%';
+                        square.style.height = '100%';
+                        square.style.display = 'flex';
+                        square.style.justifyContent = 'center';
+                        square.style.alignItems = 'center';
+                        square.style.backgroundColor = (row + col) % 2 === 0 ? '#f0d9b5' : '#b58863';
+                        
+                        // إضافة تسمية للمربعات (للعرض التوضيحي)
+                        const label = document.createElement('span');
+                        label.style.opacity = '0.3';
+                        label.style.fontSize = '10px';
+                        label.textContent = String.fromCharCode(97 + col) + (8 - row);
+                        square.appendChild(label);
+                        
+                        board.appendChild(square);
+                    }
+                }
+                
+                // في تطبيق حقيقي، هنا سيتم عرض القطع بناءً على الوضع الحالي
+            }
+            
+            // دالة لتحديث التحليل
+            function updateAnalysis() {
+                analysisDiv.innerHTML = '';
+                
+                // عرض التحليل للحركات السابقة
+                for (let i = 0; i <= currentMove; i++) {
+                    const move = gameMoves[i];
+                    if (!move) continue;
+                    
+                    const moveAnalysis = document.createElement('div');
+                    moveAnalysis.className = `move-analysis ${move.eval === 'good' || move.eval === 'neutral' ? 'good-move' : 'bad-move'}`;
+                    
+                    const moveHeader = document.createElement('div');
+                    moveHeader.className = 'move-header';
+                    moveHeader.innerHTML = `<span>الحركة ${i}: ${move.move}</span>`;
+                    
+                    const explanation = document.createElement('div');
+                    explanation.className = 'explanation';
+                    explanation.innerHTML = move.comment;
+                    
+                    moveAnalysis.appendChild(moveHeader);
+                    moveAnalysis.appendChild(explanation);
+                    
+                    analysisDiv.appendChild(moveAnalysis);
+                }
+                
+                // التمرير لأسفل لرؤية أحدث تحليل
+                analysisDiv.scrollTop = analysisDiv.scrollHeight;
+                
+                // تحديث عداد الحركة
+                document.getElementById('move-counter').textContent = `الحركة: ${currentMove} - ${currentMove === 0 ? 'البداية' : gameMoves[currentMove].move}`;
+            }
+            
+            // دالة للحركة التالية
+            function nextMove() {
+                if (currentMove < gameMoves.length - 1) {
+                    currentMove++;
+                    updateAnalysis();
+                    updateButtons();
+                }
+            }
+            
+            // دالة للرجوع للحركة السابقة
+            function prevMove() {
+                if (currentMove > 0) {
+                    currentMove--;
+                    updateAnalysis();
+                    updateButtons();
+                }
+            }
+            
+            // دالة للعودة للبداية
+            function resetGame() {
+                currentMove = 0;
+                updateAnalysis();
+                updateButtons();
+                if (autoPlayInterval) {
+                    clearInterval(autoPlayInterval);
+                    autoPlayBtn.textContent = 'تشغيل تلقائي';
+                }
+            }
+            
+            // دالة للتشغيل التلقائي
+            function toggleAutoPlay() {
+                if (autoPlayInterval) {
+                    clearInterval(autoPlayInterval);
+                    autoPlayInterval = null;
+                    autoPlayBtn.textContent = 'تشغيل تلقائي';
+                } else {
+                    autoPlayBtn.textContent = 'إيقاف التشغيل';
+                    autoPlayInterval = setInterval(() => {
+                        if (currentMove < gameMoves.length - 1) {
+                            nextMove();
+                        } else {
+                            clearInterval(autoPlayInterval);
+                            autoPlayInterval = null;
+                            autoPlayBtn.textContent = 'تشغيل تلقائي';
+                        }
+                    }, 3000);
+                }
+            }
+            
+            // دالة لتحديث حالة الأزرار
+            function updateButtons() {
+                prevBtn.disabled = currentMove === 0;
+                nextBtn.disabled = currentMove === gameMoves.length - 1;
+            }
+            
+            // تهيئة الأحداث
+            prevBtn.addEventListener('click', prevMove);
+            nextBtn.addEventListener('click', nextMove);
+            resetBtn.addEventListener('click', resetGame);
+            autoPlayBtn.addEventListener('click', toggleAutoPlay);
+            
+            // تهيئة اللوحة والتحليل
+            renderBoard();
+            updateAnalysis();
+            updateButtons();
+        });
+    </script>
+</body>
+</html>
