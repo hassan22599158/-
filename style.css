@@ -127,16 +127,30 @@ textarea {
     direction: ltr; /* Diagrams usually render better in LTR, text inside can be Arabic */
 }
 
-/* Style updates for cleaner look */
-.node rect, .node circle, .node ellipse, .node polygon, .node path {
-    fill: #eef !important;
-    stroke: #333 !important;
-    stroke-width: 1.5px !important;
+/* Style updates for cleaner look - Educational Style */
+.node rect, .node polygon, .node path {
+    fill: #ffffff !important;
+    stroke: #4a90e2 !important; /* Soft Blue Border */
+    stroke-width: 2px !important;
+    rx: 5px !important; /* Rounded corners */
+    ry: 5px !important;
+}
+
+.node circle, .node ellipse {
+    fill: #fff4e6 !important; /* Light Orange for decisions/starts */
+    stroke: #f5a623 !important;
+    stroke-width: 2px !important;
 }
 
 .edgePath .path {
-    stroke: #666 !important;
+    stroke: #555 !important;
     stroke-width: 1.5px !important;
+}
+
+.label {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    font-weight: bold;
 }
 
 /* Arabic Support */
@@ -146,9 +160,14 @@ textarea {
 
 /* Ensure math is readable */
 mjx-container {
-    direction: ltr; /* Math is generally LTR even if content is RTL, but we need to check specific Arabic equation needs */
+    direction: ltr; /* Base direction for MathJax layout logic */
     display: inline-grid;
     margin: 5px 0;
+}
+
+/* Specific override for Arabic Math to ensure superscripts appear correctly relative to text */
+[dir="rtl"] mjx-container {
+    direction: ltr; /* Keep LTR layout for the container, but content inside handles RTL */
 }
 
 /* Custom scrollbars */

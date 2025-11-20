@@ -13,11 +13,31 @@ window.MathJax = {
     options: {
         ignoreHtmlClass: 'tex2jax_ignore',
         processHtmlClass: 'tex2jax_process'
+    },
+    output: {
+        font: 'mathjax-modern'
     }
 };
 
-// Initialize Mermaid
-mermaid.initialize({ startOnLoad: false, theme: 'default' });
+// Initialize Mermaid with a cleaner, educational theme
+mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    themeVariables: {
+        fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
+        fontSize: '16px',
+        primaryColor: '#ffffff',
+        primaryBorderColor: '#007bff',
+        primaryTextColor: '#333',
+        lineColor: '#666',
+        mainBkg: '#ffffff',
+        nodeBorder: '#007bff'
+    },
+    flowchart: {
+        curve: 'basis', // Smooth curves or 'linear' for sharp lines
+        padding: 20
+    }
+});
 
 // Debounce function to avoid excessive rendering
 function debounce(func, wait) {
@@ -95,16 +115,16 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
 $$
 
 ### كتابة المعادلات العربية (Arabic Math)
-لكتابة رموز أو كلمات عربية داخل المعادلة دون أن تظهر مقطعة، استخدم \`\\text{...}\`.
+لضمان ظهور الرموز العربية بشكل صحيح (مثل التربيع والأسس)، يفضل وضع الحروف العربية داخل \`\\text{...}\`.
 
-**مثال خاطئ:**
-$$ مساحة = طول \\times عرض $$
+**القانون العام (المميز):**
+$$
+\\text{س} = \\frac{-\\text{ب} \\pm \\sqrt{\\text{ب}^2 - 4\\text{أ}\\text{ج}}}{2\\text{أ}}
+$$
 
-**مثال صحيح:**
-$$ \\text{المساحة} = \\text{الطول} \\times \\text{العرض} $$
-
-**مثال بمتغيرات:**
-$$ \\text{س}^2 + \\text{ص}^2 = \\text{ع}^2 $$
+**أمثلة أخرى:**
+- أسس عربية: $$ \\text{س}^2 + \\text{ص}^2 = 25 $$
+- تكامل: $$ \\int_0^\\infty \\text{د}(\\text{س}) \\, d\\text{س} $$
 
 ## 3. الخرائط الذهنية (Mind Maps & Diagrams)
 استخدم كود \`mermaid\` لرسم المخططات.
