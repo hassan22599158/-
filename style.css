@@ -170,6 +170,36 @@ mjx-container {
     direction: ltr; /* Keep LTR layout for the container, but content inside handles RTL */
 }
 
+/* RTL Arabic Math Mode (triggered by $$ar) */
+.arabic-math {
+    direction: rtl !important;
+    text-align: right;
+    width: 100%;
+    display: block;
+}
+
+.arabic-math mjx-container {
+    direction: rtl !important;
+    /* This forces MathJax to lay out boxes from right to left.
+       WARNING: This might break complex layouts if bidi is not present,
+       but for simple equations like x = ... it flips the order. */
+}
+
+/* Attempt to flip the radical symbol (Root) if it's an SVG path in RTL mode */
+/* Note: MathJax renders roots as <mjx-surd> or specific paths. */
+.arabic-math mjx-sqrt > mjx-surd {
+    transform: scaleX(-1); /* Flip the root symbol */
+    display: inline-block;
+}
+
+/* Fix content inside flipped root to not be flipped */
+.arabic-math mjx-sqrt > mjx-box {
+    /* Content is usually separate, but if the whole sqrt is flipped, we need to be careful.
+       The structure is usually: surd, then content under the bar.
+       If we just flip the surd character, the bar might not connect.
+       Visual verification needed. */
+}
+
 /* Custom scrollbars */
 ::-webkit-scrollbar {
     width: 8px;

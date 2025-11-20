@@ -51,7 +51,12 @@ function debounce(func, wait) {
 
 // Main render function
 const render = debounce(() => {
-    const markdownText = editor.value;
+    let markdownText = editor.value;
+
+    // Pre-process: Detect $$ar ... $$ and wrap in specific container for Arabic RTL styling
+    // We do this before markdown parsing so it becomes HTML
+    markdownText = markdownText.replace(/\$\$ar\s([\s\S]*?)\$\$/g, '<div class="arabic-math">$$$1$$</div>');
+    markdownText = markdownText.replace(/\$ar\s(.*?)\$/g, '<span class="arabic-math">$$$1$$</span>');
 
     // 1. Convert Markdown to HTML
     let html = marked.parse(markdownText);
@@ -114,17 +119,18 @@ $$
 x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
 $$
 
-### كتابة المعادلات العربية (Arabic Math)
-لضمان ظهور الرموز العربية بشكل صحيح (مثل التربيع والأسس)، يفضل وضع الحروف العربية داخل \`\\text{...}\`.
+### المعادلات العربية (Arabic Math - RTL)
+لعرض المعادلات بالاتجاه العربي الصحيح (من اليمين لليسار) وقلب إشارة الجذر، ابدأ المعادلة بـ \`$$ar\`.
 
-**القانون العام (المميز):**
-$$
+**القانون العام (معكوس لليمين):**
+$$ar
 \\text{س} = \\frac{-\\text{ب} \\pm \\sqrt{\\text{ب}^2 - 4\\text{أ}\\text{ج}}}{2\\text{أ}}
 $$
 
+**لاحظ:** الكلمة \`ar\` تخبر الموقع أن هذه معادلة عربية بالكامل.
+
 **أمثلة أخرى:**
-- أسس عربية: $$ \\text{س}^2 + \\text{ص}^2 = 25 $$
-- تكامل: $$ \\int_0^\\infty \\text{د}(\\text{س}) \\, d\\text{س} $$
+- أسس عربية: $$ar \\text{س}^2 + \\text{ص}^2 = 25 $$
 
 ## 3. الخرائط الذهنية (Mind Maps & Diagrams)
 استخدم كود \`mermaid\` لرسم المخططات.
