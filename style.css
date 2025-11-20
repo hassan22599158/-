@@ -1,0 +1,211 @@
+:root {
+    --bg-color: #f4f4f9;
+    --text-color: #333;
+    --editor-bg: #ffffff;
+    --preview-bg: #ffffff;
+    --border-color: #ddd;
+    --primary-color: #007bff;
+    --font-size: 16px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background: #fff;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+h1 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+main {
+    flex-grow: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.pane {
+    width: 50%;
+    padding: 20px;
+    overflow-y: auto;
+    border-left: 1px solid var(--border-color); /* Left border because RTL */
+}
+
+.editor-pane {
+    background-color: var(--editor-bg);
+}
+
+textarea {
+    width: 100%;
+    height: 100%;
+    border: none;
+    resize: none;
+    outline: none;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: var(--font-size);
+    line-height: 1.6;
+    direction: auto; /* Auto-detect direction based on first character */
+    padding: 10px;
+}
+
+.preview-pane {
+    background-color: var(--preview-bg);
+    font-size: var(--font-size);
+    line-height: 1.8;
+}
+
+/* Markdown Styles similar to Obsidian/ChatGPT */
+.markdown-body {
+    color: #24292e;
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3 {
+    border-bottom: 1px solid #eaecef;
+    padding-bottom: 0.3em;
+}
+
+.markdown-body table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.markdown-body table th, .markdown-body table td {
+    border: 1px solid #dfe2e5;
+    padding: 6px 13px;
+}
+
+.markdown-body table tr:nth-child(2n) {
+    background-color: #f6f8fa;
+}
+
+.markdown-body code {
+    background-color: rgba(27,31,35,.05);
+    border-radius: 3px;
+    padding: 0.2em 0.4em;
+}
+
+.markdown-body pre {
+    background-color: #f6f8fa;
+    border-radius: 3px;
+    padding: 16px;
+    overflow: auto;
+}
+
+/* Mermaid Diagram Centering */
+.mermaid {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+    direction: ltr; /* Diagrams usually render better in LTR, text inside can be Arabic */
+}
+
+/* Style updates for cleaner look - Educational Style */
+.node rect, .node polygon, .node path {
+    fill: #ffffff !important;
+    stroke: #4a90e2 !important; /* Soft Blue Border */
+    stroke-width: 2px !important;
+    rx: 5px !important; /* Rounded corners */
+    ry: 5px !important;
+}
+
+.node circle, .node ellipse {
+    fill: #fff4e6 !important; /* Light Orange for decisions/starts */
+    stroke: #f5a623 !important;
+    stroke-width: 2px !important;
+}
+
+.edgePath .path {
+    stroke: #555 !important;
+    stroke-width: 1.5px !important;
+}
+
+.label {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    font-weight: bold;
+}
+
+/* Arabic Support */
+[dir="rtl"] .markdown-body {
+    text-align: right;
+}
+
+/* Ensure math is readable */
+mjx-container {
+    direction: ltr; /* Base direction for MathJax layout logic */
+    display: inline-grid;
+    margin: 5px 0;
+}
+
+/* Specific override for Arabic Math to ensure superscripts appear correctly relative to text */
+[dir="rtl"] mjx-container {
+    direction: ltr; /* Keep LTR layout for the container, but content inside handles RTL */
+}
+
+/* RTL Arabic Math Mode (triggered by $$ar) */
+.arabic-math {
+    direction: rtl !important;
+    text-align: right;
+    width: 100%;
+    display: block;
+}
+
+.arabic-math mjx-container {
+    direction: rtl !important;
+    /* This forces MathJax to lay out boxes from right to left.
+       WARNING: This might break complex layouts if bidi is not present,
+       but for simple equations like x = ... it flips the order. */
+}
+
+/* Attempt to flip the radical symbol (Root) if it's an SVG path in RTL mode */
+/* Note: MathJax renders roots as <mjx-surd> or specific paths. */
+.arabic-math mjx-sqrt > mjx-surd {
+    transform: scaleX(-1); /* Flip the root symbol */
+    display: inline-block;
+}
+
+/* Fix content inside flipped root to not be flipped */
+.arabic-math mjx-sqrt > mjx-box {
+    /* Content is usually separate, but if the whole sqrt is flipped, we need to be careful.
+       The structure is usually: surd, then content under the bar.
+       If we just flip the surd character, the bar might not connect.
+       Visual verification needed. */
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
