@@ -1,25 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <title>لوحة الشطرنج</title>
-  <link rel="stylesheet" href="assets/chessboard.css" />
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding-top: 20px;
-      background-color: #f0f0f0;
-    }
-    #board {
-      max-width: 600px;
-      margin: auto;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المحرر الشامل (شرح، خرائط ذهنيه، معادلات)</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
-  <h1>موقع الشطرنج التفاعلي</h1>
-  <div id="board"></div>
-  <script type="module" src="main.js"></script>
+    <header>
+        <h1>المحرر الشامل</h1>
+        <div class="controls">
+            <label for="font-size">حجم الخط:</label>
+            <input type="range" id="font-size" min="12" max="32" value="16">
+            <button id="btn-help">📄 دليل الاستخدام</button>
+        </div>
+    </header>
+    <main>
+        <div class="pane editor-pane">
+            <textarea id="editor" placeholder="اكتب هنا..."></textarea>
+        </div>
+        <div class="pane preview-pane">
+            <div id="preview" class="markdown-body"></div>
+        </div>
+    </main>
+    <script src="script.js"></script>
 </body>
 </html>
